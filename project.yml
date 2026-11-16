@@ -1,0 +1,27 @@
+name: SwipeSay
+options:
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  SwipeSay:
+    type: application
+    platform: macOS
+    sources:
+      - SwipeSay
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kenjia.swipesay
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_APP_SANDBOX: YES
+schemes:
+  SwipeSay:
+    build:
+      targets:
+        SwipeSay: all
