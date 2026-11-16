@@ -2,22 +2,33 @@ import SwiftUI
 
 @main
 struct SwipeSayApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @StateObject private var settings = AppSettings.shared
+
     var body: some Scene {
-        WindowGroup("SwipeSay") {
-            ContentView()
+        MenuBarExtra {
+            MenuBarContent()
+                .environmentObject(settings)
+        } label: {
+            Image(systemName: "highlighter")
         }
-        .defaultSize(width: 560, height: 400)
     }
 }
 
-struct ContentView: View {
+private struct MenuBarContent: View {
+    @EnvironmentObject private var settings: AppSettings
+
     var body: some View {
-        ContentUnavailableView(
-            "SwipeSay",
-            systemImage: "highlighter",
-            description: Text("Select a line. Understand it in context.")
-        )
-        .frame(minWidth: 420, minHeight: 300)
-        .background(.background)
+        Button("划词翻译\t\(settings.selectionShortcut.displayString)") { AppDelegate.shared?.translateSelection() }
+        Button("截图翻译\t\(settings.screenshotShortcut.displayString)") { AppDelegate.shared?.translateScreenshot() }
+        Button("输入翻译\t\(settings.inputShortcut.displayString)") { AppDelegate.shared?.showInput() }
+        Divider()
+        Button("生词本…") { WindowManager.shared.showVocabulary() }
+            .keyboardShortcut("l")
+        Button("设置…") { WindowManager.shared.showSettings() }
+            .keyboardShortcut(",")
+        Divider()
+        Button("退出 SwipeSay") { NSApp.terminate(nil) }
+            .keyboardShortcut("q")
     }
 }
