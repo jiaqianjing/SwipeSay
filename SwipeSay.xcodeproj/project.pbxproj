@@ -8,21 +8,163 @@
 
 /* Begin PBXBuildFile section */
 		02C4894FDD2C1F9CE9F09100 /* SwipeSayApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D35F8C1DEC272A41389084AA /* SwipeSayApp.swift */; };
+		090FD2CD8F420B61B703C3D2 /* Prompts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34A4894BA44F2787D24D3855 /* Prompts.swift */; };
+		16353878435B9C105198F6ED /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270044BC0D3DF3E03905DF17 /* SettingsView.swift */; };
+		1EA586DE612149CCF59551D5 /* GeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505D90276350B83AD5BACFD5 /* GeminiClient.swift */; };
+		27CF0A56032E6BD01B61C427 /* VocabularyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD0D2450DDACE03484F4876 /* VocabularyStore.swift */; };
+		39A2FADCB3D2DA304B2940D5 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D012DAA05B026AE7F2BE673 /* AppSettings.swift */; };
 		3BBFECD579E81844B6CCE5EC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6CABD0BE7C0668E763891826 /* Assets.xcassets */; };
+		3E60912C4772C3B6C05CCE7B /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B90F2745BA95EC13D128AED /* Keychain.swift */; };
+		4EC16F359E063A4D57ADEFEC /* ProvidersPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5CB6B962FD3C005838BBAAC /* ProvidersPane.swift */; };
+		6168F9B7DEE63362A2391C72 /* ChatGPTAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4CEF10B28A1DB6E8E7AADF /* ChatGPTAuth.swift */; };
+		665C4223A704110407DD64FE /* SelectionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D1BDF21C23E17FC521D230E /* SelectionMonitor.swift */; };
+		785938F2714F718330C9C185 /* PopupRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 229D11935BE71DB7C14E47CF /* PopupRootView.swift */; };
+		7C5737FD2F656B72A3918356 /* MockClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB53400B7AC2439C6426826F /* MockClient.swift */; };
+		7CB177909062ED059F82D292 /* HotkeyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E32422093FC83EB5F9F7D0C /* HotkeyManager.swift */; };
+		7CD2AFE0654A7A70BA6E0262 /* OpenAICompatibleClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1737F9F0F72927D00114441A /* OpenAICompatibleClient.swift */; };
+		8556D9ED9E256452C9B64776 /* ProviderConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24000D579015EE9B0B0468E9 /* ProviderConfig.swift */; };
+		92282CC24F60AC8D23CA4387 /* WindowManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17D61F355DCBA939836E85A3 /* WindowManager.swift */; };
+		A6697B8F43DE2372F54B35A2 /* TranslationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B026038C52790C7381BE375 /* TranslationModels.swift */; };
+		A7609AD551AA2332A7518FEB /* AnthropicClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CE4B824B0F60497959A8998 /* AnthropicClient.swift */; };
+		A91D4548466E52F6CE7B71BA /* ScreenshotOCR.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA8888186237F3F480F2FC0F /* ScreenshotOCR.swift */; };
+		AF55CD92A1CCC9B2372C6A45 /* TranslationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFE6EB9F5A2DC90CFB2BAF1B /* TranslationService.swift */; };
+		B24DA39E0C929A6080E57CD5 /* SelectionCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A38F562DA6573DA31E21595 /* SelectionCapture.swift */; };
+		B2EF437DCAAC60CA6AC242BF /* PopupController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A576BC517976F91D8392FD0 /* PopupController.swift */; };
+		C0D0AD8154E7A13AE86817B2 /* Shortcut.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32DB37A086C0B677C6D34D29 /* Shortcut.swift */; };
+		DA0D12C4BE61B99BCC500159 /* PopupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9E6E65CEE7E2D2A425E46E5 /* PopupViewModel.swift */; };
+		E52B548BF0CF88C939EB179E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F645E31BBE6A9ED5662E9BD5 /* AppDelegate.swift */; };
+		F1DA0E2555F7DEB818DB6032 /* VocabularyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 949269E8525735EAB419F55B /* VocabularyView.swift */; };
+		FCB56B8947E41DC6C6772CC4 /* ChatGPTClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D39A496D4195C5F750E14EE /* ChatGPTClient.swift */; };
+		FDFCA0C560DA8CE6BBC42A2C /* LLMClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B4A2BCFF905E3139551513A /* LLMClient.swift */; };
+		FEF6E686BE0AD0238D1B1406 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47EC1938C4156EE17BCD1E15 /* Theme.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0D1BDF21C23E17FC521D230E /* SelectionMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionMonitor.swift; sourceTree = "<group>"; };
+		1737F9F0F72927D00114441A /* OpenAICompatibleClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAICompatibleClient.swift; sourceTree = "<group>"; };
+		17D61F355DCBA939836E85A3 /* WindowManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManager.swift; sourceTree = "<group>"; };
+		1B026038C52790C7381BE375 /* TranslationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationModels.swift; sourceTree = "<group>"; };
+		1B90F2745BA95EC13D128AED /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		229D11935BE71DB7C14E47CF /* PopupRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupRootView.swift; sourceTree = "<group>"; };
+		24000D579015EE9B0B0468E9 /* ProviderConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderConfig.swift; sourceTree = "<group>"; };
+		270044BC0D3DF3E03905DF17 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		32DB37A086C0B677C6D34D29 /* Shortcut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shortcut.swift; sourceTree = "<group>"; };
+		34A4894BA44F2787D24D3855 /* Prompts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Prompts.swift; sourceTree = "<group>"; };
+		3B4A2BCFF905E3139551513A /* LLMClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMClient.swift; sourceTree = "<group>"; };
+		3D012DAA05B026AE7F2BE673 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		47EC1938C4156EE17BCD1E15 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		4A4CEF10B28A1DB6E8E7AADF /* ChatGPTAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTAuth.swift; sourceTree = "<group>"; };
+		505D90276350B83AD5BACFD5 /* GeminiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiClient.swift; sourceTree = "<group>"; };
+		5A38F562DA6573DA31E21595 /* SelectionCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionCapture.swift; sourceTree = "<group>"; };
+		6AD0D2450DDACE03484F4876 /* VocabularyStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyStore.swift; sourceTree = "<group>"; };
 		6CABD0BE7C0668E763891826 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		7D39A496D4195C5F750E14EE /* ChatGPTClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTClient.swift; sourceTree = "<group>"; };
+		8A576BC517976F91D8392FD0 /* PopupController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupController.swift; sourceTree = "<group>"; };
+		8E32422093FC83EB5F9F7D0C /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
+		949269E8525735EAB419F55B /* VocabularyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyView.swift; sourceTree = "<group>"; };
+		9CE4B824B0F60497959A8998 /* AnthropicClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnthropicClient.swift; sourceTree = "<group>"; };
+		AB53400B7AC2439C6426826F /* MockClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockClient.swift; sourceTree = "<group>"; };
+		BA8888186237F3F480F2FC0F /* ScreenshotOCR.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotOCR.swift; sourceTree = "<group>"; };
+		C9E6E65CEE7E2D2A425E46E5 /* PopupViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupViewModel.swift; sourceTree = "<group>"; };
+		CFE6EB9F5A2DC90CFB2BAF1B /* TranslationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationService.swift; sourceTree = "<group>"; };
 		D35F8C1DEC272A41389084AA /* SwipeSayApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeSayApp.swift; sourceTree = "<group>"; };
+		D5CB6B962FD3C005838BBAAC /* ProvidersPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProvidersPane.swift; sourceTree = "<group>"; };
 		ECCBF007C63BCF264E76FD5B /* SwipeSay.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwipeSay.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F645E31BBE6A9ED5662E9BD5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		1918D838B60364D54FFAAB6D /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				A0476B0A2B628577A6534F0E /* Capture */,
+				FA6FD291CC385BF9FB493D1F /* Hotkey */,
+				5E127FADDBD577C702B2F699 /* LLM */,
+				6F653236C1B5AD13E9ABA76B /* Settings */,
+				BD17C87E0E236366C07B1DA0 /* Translation */,
+				527B61E679E69E99A95EB047 /* Vocabulary */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		527B61E679E69E99A95EB047 /* Vocabulary */ = {
+			isa = PBXGroup;
+			children = (
+				6AD0D2450DDACE03484F4876 /* VocabularyStore.swift */,
+			);
+			path = Vocabulary;
+			sourceTree = "<group>";
+		};
+		531F1B4CB9AA8FBBED971754 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				F645E31BBE6A9ED5662E9BD5 /* AppDelegate.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		5719F8985A9537F2C3083B25 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				47EC1938C4156EE17BCD1E15 /* Theme.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		5E127FADDBD577C702B2F699 /* LLM */ = {
+			isa = PBXGroup;
+			children = (
+				9CE4B824B0F60497959A8998 /* AnthropicClient.swift */,
+				4A4CEF10B28A1DB6E8E7AADF /* ChatGPTAuth.swift */,
+				7D39A496D4195C5F750E14EE /* ChatGPTClient.swift */,
+				505D90276350B83AD5BACFD5 /* GeminiClient.swift */,
+				1B90F2745BA95EC13D128AED /* Keychain.swift */,
+				3B4A2BCFF905E3139551513A /* LLMClient.swift */,
+				AB53400B7AC2439C6426826F /* MockClient.swift */,
+				1737F9F0F72927D00114441A /* OpenAICompatibleClient.swift */,
+				24000D579015EE9B0B0468E9 /* ProviderConfig.swift */,
+			);
+			path = LLM;
+			sourceTree = "<group>";
+		};
+		5EB56673D065E7F46D5FB82B /* Popup */ = {
+			isa = PBXGroup;
+			children = (
+				8A576BC517976F91D8392FD0 /* PopupController.swift */,
+				229D11935BE71DB7C14E47CF /* PopupRootView.swift */,
+				C9E6E65CEE7E2D2A425E46E5 /* PopupViewModel.swift */,
+			);
+			path = Popup;
+			sourceTree = "<group>";
+		};
+		679755425FEDF2BFAE1455D7 /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				17D61F355DCBA939836E85A3 /* WindowManager.swift */,
+				5719F8985A9537F2C3083B25 /* Components */,
+				5EB56673D065E7F46D5FB82B /* Popup */,
+				E5A08BF67F3BD0A61F94019C /* Settings */,
+				86501758B38EDD737E5EEFC9 /* Vocabulary */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		6F653236C1B5AD13E9ABA76B /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				3D012DAA05B026AE7F2BE673 /* AppSettings.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
 		7A94C98938B9BE07F1A4D31C /* SwipeSay */ = {
 			isa = PBXGroup;
 			children = (
 				6CABD0BE7C0668E763891826 /* Assets.xcassets */,
 				D35F8C1DEC272A41389084AA /* SwipeSayApp.swift */,
+				531F1B4CB9AA8FBBED971754 /* App */,
+				1918D838B60364D54FFAAB6D /* Core */,
+				679755425FEDF2BFAE1455D7 /* UI */,
 			);
 			path = SwipeSay;
 			sourceTree = "<group>";
@@ -35,12 +177,58 @@
 			);
 			sourceTree = "<group>";
 		};
+		86501758B38EDD737E5EEFC9 /* Vocabulary */ = {
+			isa = PBXGroup;
+			children = (
+				949269E8525735EAB419F55B /* VocabularyView.swift */,
+			);
+			path = Vocabulary;
+			sourceTree = "<group>";
+		};
+		A0476B0A2B628577A6534F0E /* Capture */ = {
+			isa = PBXGroup;
+			children = (
+				BA8888186237F3F480F2FC0F /* ScreenshotOCR.swift */,
+				5A38F562DA6573DA31E21595 /* SelectionCapture.swift */,
+				0D1BDF21C23E17FC521D230E /* SelectionMonitor.swift */,
+			);
+			path = Capture;
+			sourceTree = "<group>";
+		};
 		A460CFD18AD84D6EF5C59587 /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				ECCBF007C63BCF264E76FD5B /* SwipeSay.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		BD17C87E0E236366C07B1DA0 /* Translation */ = {
+			isa = PBXGroup;
+			children = (
+				34A4894BA44F2787D24D3855 /* Prompts.swift */,
+				1B026038C52790C7381BE375 /* TranslationModels.swift */,
+				CFE6EB9F5A2DC90CFB2BAF1B /* TranslationService.swift */,
+			);
+			path = Translation;
+			sourceTree = "<group>";
+		};
+		E5A08BF67F3BD0A61F94019C /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				D5CB6B962FD3C005838BBAAC /* ProvidersPane.swift */,
+				270044BC0D3DF3E03905DF17 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		FA6FD291CC385BF9FB493D1F /* Hotkey */ = {
+			isa = PBXGroup;
+			children = (
+				8E32422093FC83EB5F9F7D0C /* HotkeyManager.swift */,
+				32DB37A086C0B677C6D34D29 /* Shortcut.swift */,
+			);
+			path = Hotkey;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -110,7 +298,35 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A7609AD551AA2332A7518FEB /* AnthropicClient.swift in Sources */,
+				E52B548BF0CF88C939EB179E /* AppDelegate.swift in Sources */,
+				39A2FADCB3D2DA304B2940D5 /* AppSettings.swift in Sources */,
+				6168F9B7DEE63362A2391C72 /* ChatGPTAuth.swift in Sources */,
+				FCB56B8947E41DC6C6772CC4 /* ChatGPTClient.swift in Sources */,
+				1EA586DE612149CCF59551D5 /* GeminiClient.swift in Sources */,
+				7CB177909062ED059F82D292 /* HotkeyManager.swift in Sources */,
+				3E60912C4772C3B6C05CCE7B /* Keychain.swift in Sources */,
+				FDFCA0C560DA8CE6BBC42A2C /* LLMClient.swift in Sources */,
+				7C5737FD2F656B72A3918356 /* MockClient.swift in Sources */,
+				7CD2AFE0654A7A70BA6E0262 /* OpenAICompatibleClient.swift in Sources */,
+				B2EF437DCAAC60CA6AC242BF /* PopupController.swift in Sources */,
+				785938F2714F718330C9C185 /* PopupRootView.swift in Sources */,
+				DA0D12C4BE61B99BCC500159 /* PopupViewModel.swift in Sources */,
+				090FD2CD8F420B61B703C3D2 /* Prompts.swift in Sources */,
+				8556D9ED9E256452C9B64776 /* ProviderConfig.swift in Sources */,
+				4EC16F359E063A4D57ADEFEC /* ProvidersPane.swift in Sources */,
+				A91D4548466E52F6CE7B71BA /* ScreenshotOCR.swift in Sources */,
+				B24DA39E0C929A6080E57CD5 /* SelectionCapture.swift in Sources */,
+				665C4223A704110407DD64FE /* SelectionMonitor.swift in Sources */,
+				16353878435B9C105198F6ED /* SettingsView.swift in Sources */,
+				C0D0AD8154E7A13AE86817B2 /* Shortcut.swift in Sources */,
 				02C4894FDD2C1F9CE9F09100 /* SwipeSayApp.swift in Sources */,
+				FEF6E686BE0AD0238D1B1406 /* Theme.swift in Sources */,
+				A6697B8F43DE2372F54B35A2 /* TranslationModels.swift in Sources */,
+				AF55CD92A1CCC9B2372C6A45 /* TranslationService.swift in Sources */,
+				27CF0A56032E6BD01B61C427 /* VocabularyStore.swift in Sources */,
+				F1DA0E2555F7DEB818DB6032 /* VocabularyView.swift in Sources */,
+				92282CC24F60AC8D23CA4387 /* WindowManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -245,9 +461,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = SwipeSay;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© SwipeSay";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -262,9 +482,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
-				ENABLE_APP_SANDBOX = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = SwipeSay;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© SwipeSay";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
