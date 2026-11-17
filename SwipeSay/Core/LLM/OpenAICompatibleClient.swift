@@ -50,11 +50,17 @@ struct OpenAICompatibleClient: LLMClient {
         }
     }
 
-    func listModels() async throws -> [String] {
+    func listModels() async throws -> [ModelInfo] {
         var req = URLRequest(url: try HTTP.url(config.baseURL, "/models"))
         for (k, v) in headers where k == "Authorization" { req.setValue(v, forHTTPHeaderField: k) }
         let json = try await HTTP.getJSON(req)
         let data = json["data"] as? [[String: Any]] ?? []
-        return data.compactMap { $0["id"] as? String }.sorted()
+        return data.compactMap { m -> ModelInfo? in
+            guard let id = m["id"] as? String else { return nil }
+            // OpenAI: `created` is Unix seconds, `shutdown_date` a date string or null. Other servers may omit both.
+            let created = (m["created"] as? NSNumber).map { Date(timeIntervalSince1970: $0.doubleValue) }
+            let shutdown = m["shutdown_date"] as? String
+            return ModelInfo(id: id, created: created, deprecated: shutdown?.isEmpty == false)
+        }
     }
 }

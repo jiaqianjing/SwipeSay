@@ -38,6 +38,6 @@ struct MockClient: LLMClient {
         }
     }
 
-    func listModels() async throws -> [String] { ["mock-model"] }
+    func listModels() async throws -> [ModelInfo] { [ModelInfo(id: "mock-model")] }
 }
 #endif

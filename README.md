@@ -85,8 +85,8 @@ Everything you look up or star is saved with its source sentence and app. You ca
 | **ChatGPT subscription** | Sign in with ChatGPT, or import `~/.codex/auth.json` | `gpt-6-luna` |
 | **OpenAI** | API key | `gpt-6-luna` |
 | **Anthropic** | API key | `claude-haiku-5-5` |
-| **Google Gemini** | API key | `gemini-2.5-flash` |
-| **DeepSeek** | API key | `deepseek-chat` |
+| **Google Gemini** | API key | `gemini-3.5-flash-lite` |
+| **DeepSeek** | API key | `deepseek-flash` |
 | **OpenAI-compatible** | Optional key | OpenRouter, Moonshot, Qwen, Zhipu, Ollama, LM Studio… |
 
 The defaults are each provider's fast, inexpensive tier, because translation is short, high-volume work. You can pick any model in Settings → 模型服务. API keys are stored in the login Keychain.

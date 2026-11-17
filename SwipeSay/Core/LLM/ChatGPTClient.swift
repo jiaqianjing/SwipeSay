@@ -62,8 +62,8 @@ struct ChatGPTClient: LLMClient {
         }
     }
 
-    func listModels() async throws -> [String] {
+    func listModels() async throws -> [ModelInfo] {
         // The Codex backend has no stable public listing; offer the known plan models.
-        ProviderKind.chatGPT.suggestedModels
+        ProviderKind.chatGPT.suggestedModels.map { ModelInfo(id: $0) }
     }
 }

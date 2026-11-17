@@ -41,7 +41,8 @@ enum LLMError: LocalizedError {
 protocol LLMClient {
     /// Streams text deltas.
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error>
-    func listModels() async throws -> [String]
+    /// The provider's full model listing, unfiltered; `ModelCatalog` decides what the picker shows.
+    func listModels() async throws -> [ModelInfo]
 }
 
 extension LLMClient {

@@ -18,6 +18,7 @@
 		3E60912C4772C3B6C05CCE7B /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B90F2745BA95EC13D128AED /* Keychain.swift */; };
 		4EC16F359E063A4D57ADEFEC /* ProvidersPane.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5CB6B962FD3C005838BBAAC /* ProvidersPane.swift */; };
 		6168F9B7DEE63362A2391C72 /* ChatGPTAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A4CEF10B28A1DB6E8E7AADF /* ChatGPTAuth.swift */; };
+		656CDB5776928CA86579D2AE /* ModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 986804E9F11E06A98278B4B3 /* ModelCatalog.swift */; };
 		665C4223A704110407DD64FE /* SelectionMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D1BDF21C23E17FC521D230E /* SelectionMonitor.swift */; };
 		785938F2714F718330C9C185 /* PopupRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 229D11935BE71DB7C14E47CF /* PopupRootView.swift */; };
 		7C5737FD2F656B72A3918356 /* MockClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB53400B7AC2439C6426826F /* MockClient.swift */; };
@@ -65,6 +66,7 @@
 		8A576BC517976F91D8392FD0 /* PopupController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupController.swift; sourceTree = "<group>"; };
 		8E32422093FC83EB5F9F7D0C /* HotkeyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotkeyManager.swift; sourceTree = "<group>"; };
 		949269E8525735EAB419F55B /* VocabularyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VocabularyView.swift; sourceTree = "<group>"; };
+		986804E9F11E06A98278B4B3 /* ModelCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelCatalog.swift; sourceTree = "<group>"; };
 		9CE4B824B0F60497959A8998 /* AnthropicClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnthropicClient.swift; sourceTree = "<group>"; };
 		AB53400B7AC2439C6426826F /* MockClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockClient.swift; sourceTree = "<group>"; };
 		BA8888186237F3F480F2FC0F /* ScreenshotOCR.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenshotOCR.swift; sourceTree = "<group>"; };
@@ -136,6 +138,7 @@
 				1B90F2745BA95EC13D128AED /* Keychain.swift */,
 				3B4A2BCFF905E3139551513A /* LLMClient.swift */,
 				AB53400B7AC2439C6426826F /* MockClient.swift */,
+				986804E9F11E06A98278B4B3 /* ModelCatalog.swift */,
 				1737F9F0F72927D00114441A /* OpenAICompatibleClient.swift */,
 				24000D579015EE9B0B0468E9 /* ProviderConfig.swift */,
 			);
@@ -336,6 +339,7 @@
 				3E60912C4772C3B6C05CCE7B /* Keychain.swift in Sources */,
 				FDFCA0C560DA8CE6BBC42A2C /* LLMClient.swift in Sources */,
 				7C5737FD2F656B72A3918356 /* MockClient.swift in Sources */,
+				656CDB5776928CA86579D2AE /* ModelCatalog.swift in Sources */,
 				7CD2AFE0654A7A70BA6E0262 /* OpenAICompatibleClient.swift in Sources */,
 				B2EF437DCAAC60CA6AC242BF /* PopupController.swift in Sources */,
 				785938F2714F718330C9C185 /* PopupRootView.swift in Sources */,

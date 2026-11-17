@@ -85,7 +85,9 @@ struct ProviderDetailView: View {
 
     @State var config: ProviderConfig
     @State private var apiKey = ""
-    @State private var fetchedModels: [String] = []
+    @State private var fetchedModels: [ModelInfo] = []
+    /// 显示全部模型: skip the catalog's filters (non-chat models, dated snapshots, deprecated models).
+    @State private var showAllModels = false
     @State private var fetching = false
     /// Quiet one-line status under the model field ("12 models · 0.35 s" or why fetching failed).
     @State private var modelNote: ModelNote?
@@ -169,12 +171,22 @@ struct ProviderDetailView: View {
                                     .textFieldStyle(.roundedBorder)
                                     .frame(maxWidth: .infinity)
                                 Menu {
-                                    let models = fetchedModels.isEmpty ? config.kind.suggestedModels : fetchedModels
-                                    ForEach(models, id: \.self) { m in Button(m) { config.model = m } }
+                                    let list = modelList
+                                    ForEach(list.pinned, id: \.id) { m in modelButton(m) }
+                                    if !list.pinned.isEmpty && !list.others.isEmpty { Divider() }
+                                    ForEach(list.others, id: \.id) { m in modelButton(m) }
+                                    if !fetchedModels.isEmpty {
+                                        Divider()
+                                        Toggle("显示全部模型", isOn: $showAllModels)
+                                    }
                                     if config.kind != .chatGPT {
                                         Divider()
                                         Button("从服务获取模型列表") { Task { await fetchModels() } }
                                             .disabled(!hasCredentials)
+                                    }
+                                    if (list.pinned + list.others).contains(where: { price(of: $0.id) != nil }) {
+                                        Divider()
+                                        Text("价格为每百万 token 输入 / 输出（美元），参考价，以官网为准")
                                     }
                                 } label: {
                                     if fetching { ProgressView().controlSize(.small) } else { Image(systemName: "list.bullet") }
@@ -182,11 +194,26 @@ struct ProviderDetailView: View {
                                 .menuStyle(.borderlessButton)
                                 .fixedSize()
                             }
+                            let list = modelList
                             if let modelNote {
-                                Text(modelNote.text)
+                                let hidden = modelNote.isError ? 0 : list.hidden
+                                let what = showAllModels ? "已弃用" : "非对话、旧版本或已弃用"
+                                Text(modelNote.text + (hidden > 0 ? " · 已隐藏 \(hidden) 个\(what)模型" : ""))
                                     .font(.system(size: 10.5))
                                     .foregroundStyle(modelNote.isError ? Color.orange : Color.secondary)
                                     .lineLimit(2)
+                            }
+                            if list.selectedDeprecated {
+                                Label("当前模型已弃用，建议换用列表中的推荐模型", systemImage: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 10.5))
+                                    .foregroundStyle(.orange)
+                                    .lineLimit(1)
+                            }
+                            if let price = price(of: config.model) {
+                                Text("参考价 \(price.label) / 百万 token（输入 / 输出），以官网为准")
+                                    .font(.system(size: 10.5))
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
                             }
                         }
                     }
@@ -253,6 +280,22 @@ struct ProviderDetailView: View {
         case .chatGPT: return "通常无需修改"
         default: return nil
         }
+    }
+
+    /// What the model menu shows: the fetched list, or the provider's suggestions before a fetch.
+    private var modelList: ModelCatalog.Arranged {
+        let models = fetchedModels.isEmpty ? config.kind.suggestedModels.map { ModelInfo(id: $0) } : fetchedModels
+        return ModelCatalog.arrange(models, kind: config.kind, selected: config.model, showAll: showAllModels)
+    }
+
+    private func price(of model: String) -> ModelPrice? {
+        ModelCatalog.price(for: model, kind: config.kind)
+    }
+
+    private func modelButton(_ model: ModelInfo) -> some View {
+        var title = model.id
+        if model.deprecated { title += "  ·  已弃用" } else if let price = price(of: model.id) { title += "  ·  \(price.label)" }
+        return Button(title) { config.model = model.id }
     }
 
     /// Writes the typed key to the keychain if it changed, and refreshes the provider list's ready state.
