@@ -9,7 +9,8 @@ struct MockClient: LLMClient {
 
     static let config: ProviderConfig = {
         var c = ProviderConfig(kind: .openAICompatible, name: "Mock")
-        c.model = "mock-model"
+        // `-SwipeSayMockModel <name>` sets the model shown in the popup footer (handy for screenshots).
+        c.model = UserDefaults.standard.string(forKey: "SwipeSayMockModel") ?? "mock-model"
         return c
     }()
 
