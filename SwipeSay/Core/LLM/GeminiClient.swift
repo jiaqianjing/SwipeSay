@@ -34,15 +34,16 @@ struct GeminiClient: LLMClient {
         }
     }
 
-    func listModels() async throws -> [String] {
+    func listModels() async throws -> [ModelInfo] {
         var req = URLRequest(url: try HTTP.url(config.baseURL, "/v1beta/models?pageSize=200"))
         req.setValue(config.apiKey ?? "", forHTTPHeaderField: "x-goog-api-key")
         let json = try await HTTP.getJSON(req)
         let models = json["models"] as? [[String: Any]] ?? []
-        return models.compactMap { m -> String? in
-            guard let methods = m["supportedGenerationMethods"] as? [String], methods.contains("generateContent"),
-                  let name = m["name"] as? String else { return nil }
-            return name.replacingOccurrences(of: "models/", with: "")
+        // The Model resource has no release date; ModelCatalog filters on `supportedGenerationMethods`.
+        return models.compactMap { m -> ModelInfo? in
+            guard let name = m["name"] as? String else { return nil }
+            return ModelInfo(id: name.replacingOccurrences(of: "models/", with: ""),
+                             generationMethods: m["supportedGenerationMethods"] as? [String] ?? [])
         }
     }
 }

@@ -64,11 +64,23 @@ struct AnthropicClient: LLMClient {
         }
     }
 
-    func listModels() async throws -> [String] {
+    func listModels() async throws -> [ModelInfo] {
         var req = URLRequest(url: try HTTP.url(config.baseURL, "/v1/models?limit=100"))
         for (k, v) in baseHeaders { req.setValue(v, forHTTPHeaderField: k) }
         let json = try await HTTP.getJSON(req)
         let data = json["data"] as? [[String: Any]] ?? []
-        return data.compactMap { $0["id"] as? String }
+        return data.compactMap { m -> ModelInfo? in
+            guard let id = m["id"] as? String else { return nil }
+            // `created_at` is RFC 3339 and "may be set to an epoch value if the release date is unknown".
+            let created = (m["created_at"] as? String).flatMap(Self.parseDate).flatMap { $0.timeIntervalSince1970 > 86_400 ? $0 : nil }
+            return ModelInfo(id: id, created: created, deprecated: m["lifecycle"] as? String == "deprecated")
+        }
+    }
+
+    private static func parseDate(_ s: String) -> Date? {
+        let f = ISO8601DateFormatter()
+        if let d = f.date(from: s) { return d }
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f.date(from: s)
     }
 }

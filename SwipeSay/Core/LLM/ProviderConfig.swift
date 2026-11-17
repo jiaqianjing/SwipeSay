@@ -51,8 +51,12 @@ enum ProviderKind: String, Codable, CaseIterable, Identifiable {
         case .chatGPT: return "gpt-6-luna"
         case .openAI: return "gpt-6-luna"
         case .anthropic: return "claude-haiku-5-5"
-        case .gemini: return "gemini-2.5-flash"
-        case .deepSeek: return "deepseek-chat"
+        // Checked 2026-11-17. Gemini: https://aistudio.google.com/docs/models recommends 3.5 Flash-Lite for
+        // low-latency, cost-efficient work (2.5 Flash / Pro are deprecated and reroute on 2026-12-01).
+        // DeepSeek: https://api-docs.deepseek.com/updates/ retired deepseek-chat / deepseek-reasoner on
+        // 2026-07-24; https://api-docs.deepseek.com/api/list-models/ lists deepseek-flash and deepseek-v4-pro.
+        case .gemini: return "gemini-3.5-flash-lite"
+        case .deepSeek: return "deepseek-flash"
         case .openAICompatible: return ""
         }
     }
@@ -63,8 +67,8 @@ enum ProviderKind: String, Codable, CaseIterable, Identifiable {
         case .chatGPT: return ["gpt-6-luna", "gpt-6.1-terra", "gpt-6.1-sol"]
         case .openAI: return ["gpt-6-luna", "gpt-6.1-terra", "gpt-6.1-sol", "gpt-5.4-mini"]
         case .anthropic: return ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-2"]
-        case .gemini: return ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.5-flash-lite"]
-        case .deepSeek: return ["deepseek-chat", "deepseek-reasoner"]
+        case .gemini: return ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-4-hydrogen", "gemini-3.8-flash"]
+        case .deepSeek: return ["deepseek-flash", "deepseek-v4-pro"]
         case .openAICompatible: return []
         }
     }
@@ -137,6 +141,8 @@ final class ProviderStore: ObservableObject {
             // Move configs still on an old built-in default to the current one; user-picked models stay.
             let legacyDefaults: [ProviderKind: Set<String>] = [
                 .chatGPT: ["gpt-5.5"], .openAI: ["gpt-5-mini"], .anthropic: ["claude-opus-5-5"],
+                // Deprecated or retired upstream (see `defaultModel`); gemini-2.5-flash-lite is still served.
+                .gemini: ["gemini-2.5-flash", "gemini-2.5-pro"], .deepSeek: ["deepseek-chat", "deepseek-reasoner"],
             ]
             providers = saved.map { config in
                 var c = config
