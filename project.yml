@@ -7,16 +7,26 @@ settings:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    exactVersion: 2.10.1
 targets:
   SwipeSay:
     type: application
     platform: macOS
     sources:
-      - SwipeSay
+      - path: SwipeSay
+        excludes:
+          - Info.plist
+    dependencies:
+      - package: Sparkle
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.kenjia.swipesay
         GENERATE_INFOPLIST_FILE: YES
+        # Sparkle keys (feed URL, EdDSA public key) are merged in from this file.
+        INFOPLIST_FILE: SwipeSay/Info.plist
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
         INFOPLIST_KEY_LSUIElement: YES
         INFOPLIST_KEY_CFBundleDisplayName: SwipeSay
