@@ -8,7 +8,18 @@ enum Keychain {
     private static var cache: [String: String] = [:]
     private static let lock = NSLock()
 
+    /// Mock mode never touches the real keychain. A differently signed Debug build reading items saved by the
+    /// release app would trigger a blocking keychain prompt, and mock mode doesn't need real secrets.
+    private static var disabled: Bool {
+        #if DEBUG
+        return MockClient.isEnabled
+        #else
+        return false
+        #endif
+    }
+
     static func get(_ account: String) -> String? {
+        if disabled { return nil }
         lock.lock(); defer { lock.unlock() }
         if let cached = cache[account] { return cached.isEmpty ? nil : cached }
         let query: [String: Any] = [
@@ -29,6 +40,7 @@ enum Keychain {
     }
 
     static func set(_ value: String?, for account: String) {
+        if disabled { return }
         lock.lock(); defer { lock.unlock() }
         let base: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,

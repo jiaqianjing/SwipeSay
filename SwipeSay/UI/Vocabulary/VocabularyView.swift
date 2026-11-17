@@ -48,10 +48,17 @@ struct VocabularyView: View {
                     }
                     .onDelete { offsets in offsets.map { filtered[$0] }.forEach(delete) }
                 }
-                .listStyle(.sidebar)
+                .modifier(SidebarListStyle())
                 .searchable(text: $search, placement: .sidebar, prompt: "搜索单词或释义")
             }
             .navigationSplitViewColumnWidth(min: 240, ideal: 280)
+            #if DEBUG
+            // `-SwipeSayDemoSelect <term>` opens that entry, for screenshots.
+            .onAppear {
+                guard selection == nil, let term = UserDefaults.standard.string(forKey: "SwipeSayDemoSelect") else { return }
+                selection = items.first { $0.key == VocabItem.normalize(term) }?.persistentModelID
+            }
+            #endif
         } detail: {
             if let id = selection, let item = items.first(where: { $0.persistentModelID == id }) {
                 VocabDetailView(item: item) { delete(item) }
@@ -293,5 +300,18 @@ struct ReviewView: View {
         .controlSize(.large)
         .tint(color)
         .keyboardShortcut(key, modifiers: [])
+    }
+}
+
+/// Sidebar list style, except under Debug `-SwipeSayFlatBackground YES`. In-app snapshots can't draw the
+/// sidebar's vibrant text and selection, so that mode uses the plain inset style instead.
+private struct SidebarListStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        #if DEBUG
+        if UserDefaults.standard.bool(forKey: "SwipeSayFlatBackground") {
+            return AnyView(content.listStyle(.inset))
+        }
+        #endif
+        return AnyView(content.listStyle(.sidebar))
     }
 }

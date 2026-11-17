@@ -16,7 +16,18 @@ struct VisualEffectBackground: NSViewRepresentable {
     var material: NSVisualEffectView.Material = .popover
     var blending: NSVisualEffectView.BlendingMode = .behindWindow
 
-    func makeNSView(context: Context) -> NSVisualEffectView {
+    /// Debug-only `-SwipeSayFlatBackground YES` draws a solid fill instead of the blur, so screenshots
+    /// (including in-app snapshots, which can't render the window-server blur) look the same anywhere.
+    private var flat: Bool {
+        #if DEBUG
+        return UserDefaults.standard.bool(forKey: "SwipeSayFlatBackground")
+        #else
+        return false
+        #endif
+    }
+
+    func makeNSView(context: Context) -> NSView {
+        if flat { return FlatBackgroundView() }
         let v = NSVisualEffectView()
         v.material = material
         v.blendingMode = blending
@@ -24,10 +35,22 @@ struct VisualEffectBackground: NSViewRepresentable {
         return v
     }
 
-    func updateNSView(_ v: NSVisualEffectView, context: Context) {
+    func updateNSView(_ v: NSView, context: Context) {
+        guard let v = v as? NSVisualEffectView else { return }
         v.material = material
         v.blendingMode = blending
     }
+}
+
+/// Solid window-background fill that follows light/dark appearance.
+final class FlatBackgroundView: NSView {
+    override var wantsUpdateLayer: Bool { true }
+    override func updateLayer() {
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        }
+    }
+    override func viewDidChangeEffectiveAppearance() { needsDisplay = true }
 }
 
 /// Small rounded tag.

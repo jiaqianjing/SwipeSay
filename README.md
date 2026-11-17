@@ -1,46 +1,143 @@
+<div align="center">
+
+<img src="SwipeSay/Assets.xcassets/AppIcon.appiconset/icon-256@1x.png" width="128" height="128" alt="SwipeSay icon">
+
 # SwipeSay
 
-A native macOS menu-bar translator: select text or capture a screen region, get a context-aware translation, and learn the expressions worth keeping.
+**Select text, get a translation that knows its context, and keep the phrases worth learning.**
 
-## Features
+划词即译 · 结合上下文 · 顺手攒下值得学的表达
 
-- **Selection translation (⌥D)** reads the selection *and the paragraph around it* through the Accessibility API (native text views plus WebKit/Chromium text markers). The model uses that context only to resolve ambiguity, so pronouns, polysemous words and terminology come out right. When an app exposes no accessibility text, SwipeSay falls back to ⌘C and restores your clipboard afterwards.
-- **Quick button**: select text with the mouse and a small coral button appears next to the cursor. Click it to translate.
-- **Screenshot translation (⌥S)** uses the system crosshair, then on-device Vision OCR that rebuilds paragraphs from the line layout.
-- **Input translation (⌥A)** opens a Spotlight-style box.
-- **Word cards**: selecting a single word or short phrase shows its meaning in context, phonetics, senses, the example sentence and a usage tip.
-- **Key expressions capsule (✦ 重点表达)** is collapsed by default. Expanding it extracts the phrases, collocations and words worth learning, chosen for your level (set in Settings → 学习), and highlights them in the source sentence.
-- **On-demand sentence analysis**: the capsule also decides whether a sentence deserves analysis. Only genuinely complex sentences, or idiomatic everyday ones, get a **解析句子** button. Pressing it produces the sentence skeleton and meaningful chunks with their roles, or the tone and alternatives for a conversational line, plus key takeaways and a simpler paraphrase.
-- **Vocabulary book**: words you look up and key expressions are added automatically, with the source sentence and app. It has search, flashcard review with spaced repetition, and CSV export.
-- **Providers**:
-  - ChatGPT subscription sign-in (the Codex OAuth flow, or import an existing `~/.codex/auth.json`).
-  - OpenAI, Anthropic, Google Gemini and DeepSeek.
-  - Any OpenAI-compatible server: OpenRouter, Moonshot, Qwen, Zhipu, Ollama, LM Studio and others.
-  - API keys are stored in the login Keychain.
+[![Download](https://img.shields.io/badge/Download-v0.1.0-F2645C?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/jiaqianjing/SwipeSay/releases/latest)
 
-## Build
+![macOS 14+](https://img.shields.io/badge/macOS-14%2B-111111?logo=apple&logoColor=white)
+![Swift](https://img.shields.io/badge/Swift-SwiftUI-F05138?logo=swift&logoColor=white)
+![Universal](https://img.shields.io/badge/Apple%20silicon%20%2B%20Intel-Universal-FFC83D)
+![Notarized](https://img.shields.io/badge/Developer%20ID-notarized-34C759)
 
-Requires Xcode 16+ and macOS 14+.
+<br>
+
+<img src="docs/images/hero.jpg" alt="SwipeSay translating a sentence with key expressions and sentence analysis, next to a word card" width="900">
+
+</div>
+
+---
+
+## Why SwipeSay
+
+Most translators see only the words you selected. SwipeSay also reads **the paragraph around your selection**, so pronouns, polysemous words and terminology come out right. It then helps you **learn** from what you read without getting in the way.
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+### 🖱️ Translate anywhere
+Select text in any app and press <kbd>⌥</kbd> <kbd>D</kbd>, or click the small coral button that appears by the cursor. <kbd>⌥</kbd> <kbd>S</kbd> translates a screen region with on-device OCR, and <kbd>⌥</kbd> <kbd>A</kbd> opens an input box.
+
+</td>
+<td width="33%" valign="top">
+
+### 🧠 Context-aware
+SwipeSay reads the surrounding paragraph through the Accessibility API, covering native text views, Safari/WebKit and Chromium. The model uses that context only to resolve ambiguity, so the translation stays close to what you selected.
+
+</td>
+<td width="33%" valign="top">
+
+### ✦ Learn as you go
+Expand the **重点表达** capsule to pull out the phrases, collocations and words worth learning. They are highlighted in the source and saved to your vocabulary book automatically.
+
+</td>
+</tr>
+</table>
+
+## A closer look
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+#### Word cards
+Select a single word or a short phrase to get its meaning *in this context*, plus phonetics, senses, an example sentence and a usage tip.
+
+<img src="docs/images/word.png" alt="Word card for “ubiquitous”">
+
+</td>
+<td width="50%" valign="top">
+
+#### Sentence analysis, only when it's worth it
+The capsule decides whether a sentence deserves analysis. Only genuinely complex sentences, or idiomatic everyday ones, get a **解析句子** button. Pressing it shows the sentence skeleton, chunks with their roles, key takeaways and a simpler paraphrase.
+
+<img src="docs/images/analysis.png" alt="Sentence analysis breaking an inverted sentence into its parts">
+
+</td>
+</tr>
+</table>
+
+#### Vocabulary book
+Everything you look up or star is saved with its source sentence and app. You can search it, review it as flashcards with spaced repetition, and export it to CSV.
+
+<img src="docs/images/vocabulary.png" alt="Vocabulary book with flashcard review" width="900">
+
+## Bring your own model
+
+| Provider | Sign-in | Default model |
+|---|---|---|
+| **ChatGPT subscription** | Sign in with ChatGPT, or import `~/.codex/auth.json` | `gpt-6-luna` |
+| **OpenAI** | API key | `gpt-6-luna` |
+| **Anthropic** | API key | `claude-haiku-5-5` |
+| **Google Gemini** | API key | `gemini-2.5-flash` |
+| **DeepSeek** | API key | `deepseek-chat` |
+| **OpenAI-compatible** | Optional key | OpenRouter, Moonshot, Qwen, Zhipu, Ollama, LM Studio… |
+
+The defaults are each provider's fast, inexpensive tier, because translation is short, high-volume work. You can pick any model in Settings → 模型服务. API keys are stored in the login Keychain.
+
+## Install
+
+1. Download **[SwipeSay-0.1.0.dmg](https://github.com/jiaqianjing/SwipeSay/releases/latest)** and drag SwipeSay into Applications.
+2. On first launch, grant these in System Settings → Privacy & Security:
+   - **Accessibility**, to read selections and their context. On macOS 27 it is listed as **Device Control and Data Access** (设备控制和数据访问).
+   - **Screen Recording**, for screenshot translation. You may need to relaunch SwipeSay after granting it.
+3. Choose a provider in Settings → 模型服务.
+
+The app is signed with Developer ID and notarized by Apple. It is Universal (Apple silicon and Intel) and requires macOS 14 or later.
+
+<details>
+<summary><b>Accessibility is on but SwipeSay still says it's missing?</b></summary>
+
+<br>
+
+An approval left by an older build of the app is probably in the way. Reset it and grant access again:
+
+```bash
+tccutil reset Accessibility com.kenjia.swipesay
+```
+
+</details>
+
+## Shortcuts
+
+| Action | Default |
+|---|---|
+| Translate selection | <kbd>⌥</kbd> <kbd>D</kbd> |
+| Translate screenshot | <kbd>⌥</kbd> <kbd>S</kbd> |
+| Input box | <kbd>⌥</kbd> <kbd>A</kbd> |
+| Close popup | <kbd>Esc</kbd> |
+
+You can change any of them in Settings → 快捷键.
+
+## Build from source
+
+Requires Xcode 16+ and [XcodeGen](https://github.com/yonaskolb/XcodeGen).
 
 ```bash
 xcodegen generate
 open SwipeSay.xcodeproj
 ```
 
-The shared project is generated from `project.yml`. Re-run `xcodegen generate` after adding files or editing the spec.
+The Xcode project is generated from `project.yml`. Run `xcodegen generate` again after adding files.
 
-On first launch, grant:
-
-- **Accessibility**, for reading selections and context and for the ⌘C fallback.
-- **Screen Recording**, for screenshot translation. You may need to relaunch the app after granting it.
-
-Debug builds are ad-hoc signed, so macOS may ask for these permissions again after a rebuild. If a permission looks granted but doesn't work, remove SwipeSay from the list and add it again.
-
-### Why no App Sandbox
-
-Reading other apps' selections (`AXUIElement`), posting ⌘C, and the localhost OAuth callback are not allowed in the sandbox. Bob and Easydict ship outside the Mac App Store for the same reason. Hardened Runtime stays on.
-
-## Project layout
+<details>
+<summary><b>Project layout</b></summary>
 
 ```
 SwipeSay/
@@ -61,7 +158,12 @@ SwipeSay/
 
 All prompts live in `Core/Translation/Prompts.swift`.
 
-### UI work without an API key (Debug only)
+</details>
+
+<details>
+<summary><b>UI work without an API key (Debug builds)</b></summary>
+
+<br>
 
 ```bash
 SwipeSay.app/Contents/MacOS/SwipeSay -SwipeSayMock YES \
@@ -69,9 +171,33 @@ SwipeSay.app/Contents/MacOS/SwipeSay -SwipeSayMock YES \
   -SwipeSayDemoExpand YES
 ```
 
-`-SwipeSayMock` swaps in canned responses and an in-memory vocabulary. `-SwipeSayOpen providers|general|shortcuts|learning|vocabulary` opens a window directly.
+| Flag | Effect |
+|---|---|
+| `-SwipeSayMock YES` | Canned responses and an in-memory vocabulary |
+| `-SwipeSayDemo "text"` | Opens a popup for that text |
+| `-SwipeSayDemoExpand YES` | Also opens the capsule and the analysis |
+| `-SwipeSayDemoVocabulary YES` | Fills the in-memory vocabulary with sample entries |
+| `-SwipeSayOpen <pane>` | Opens `general`, `providers`, `shortcuts`, `learning` or `vocabulary` |
+| `-SwipeSayDemoSelect <term>` | Selects that entry in the vocabulary book |
+| `-SwipeSayMockModel <name>` | Model name shown in the popup footer |
+| `-SwipeSayAppearance light\|dark` | Forces the app's appearance |
+| `-SwipeSayFlatBackground YES` | Solid backgrounds instead of the blur |
+| `-SwipeSaySnapshot <prefix>` | Writes each visible window to `<prefix>-<n>.png`, then quits. This needs no Screen Recording permission |
+
+Mock mode never touches the keychain. The screenshots in this README were made with these flags, using a background illustration generated by Codex.
+
+</details>
+
+<details>
+<summary><b>Why there's no App Sandbox</b></summary>
+
+<br>
+
+Reading other apps' selections (`AXUIElement`), posting ⌘C as a fallback, and the localhost OAuth callback are not allowed in the sandbox. That is why SwipeSay ships outside the Mac App Store, as Bob and Easydict do. Hardened Runtime stays on.
+
+</details>
 
 ## Notes
 
 - The ChatGPT sign-in uses the Codex endpoints (`auth.openai.com` OAuth, `chatgpt.com/backend-api/codex/responses`). They are not a documented public API and may change.
-- Anthropic requests use low effort and server-side refusal fallbacks on models that support them, to keep translations fast.
+- Requests use low reasoning effort where the provider supports it, to keep translations fast.
