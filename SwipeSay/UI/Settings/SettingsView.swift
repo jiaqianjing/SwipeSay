@@ -38,6 +38,7 @@ struct SettingsView: View {
                 case .providers: ProvidersPane()
                 case .shortcuts: ShortcutsPane()
                 case .learning: LearningPane()
+                case .usage: UsagePane()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

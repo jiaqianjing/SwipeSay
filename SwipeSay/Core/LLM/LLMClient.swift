@@ -6,6 +6,8 @@ struct LLMRequest {
     /// Ask the provider for a JSON object when it supports a native JSON mode.
     var expectsJSON: Bool = false
     var maxTokens: Int = 4096
+    /// What the request is for; only used to label usage records.
+    var kind: UsageKind = .other
 }
 
 enum LLMError: LocalizedError {
@@ -97,8 +99,10 @@ enum HTTP {
     }
 
     /// Opens a streaming request and calls `onData` with the JSON payload of every SSE `data:` line.
+    /// `meter`, when given, sees every yielded delta so usage can be estimated if the provider reports none.
     static func streamSSE(_ request: URLRequest,
                           continuation: AsyncThrowingStream<String, Error>.Continuation,
+                          meter: UsageMeter? = nil,
                           onData: (String) throws -> String?) async throws {
         let (bytes, response) = try await session.bytes(for: request)
         guard let http = response as? HTTPURLResponse else { throw LLMError.invalidResponse("no response") }
@@ -112,7 +116,10 @@ enum HTTP {
             guard line.hasPrefix("data:") else { continue }
             let payload = line.dropFirst(5).trimmingCharacters(in: .whitespaces)
             if payload == "[DONE]" { break }
-            if let delta = try onData(payload), !delta.isEmpty { continuation.yield(delta) }
+            if let delta = try onData(payload), !delta.isEmpty {
+                meter?.addOutput(delta)
+                continuation.yield(delta)
+            }
         }
     }
 
@@ -146,4 +153,29 @@ func makeStream(_ body: @escaping (AsyncThrowingStream<String, Error>.Continuati
         }
         continuation.onTermination = { _ in task.cancel() }
     }
+}
+
+/// Like `makeStream`, and records the request with `UsageTracker` when it ends — finished, failed or cancelled.
+/// The body fills `meter.usage` with whatever token counts the provider reports and passes `meter` to
+/// `HTTP.streamSSE` so the output can be estimated when the provider reports nothing.
+func makeUsageStream(config: ProviderConfig, request: LLMRequest,
+                     _ body: @escaping (AsyncThrowingStream<String, Error>.Continuation, UsageMeter) async throws -> Void)
+    -> AsyncThrowingStream<String, Error> {
+    makeStream { continuation in
+        let meter = UsageMeter()
+        do {
+            try await body(continuation, meter)
+        } catch {
+            UsageTracker.record(provider: config, kind: request.kind, usage: meter.usage,
+                                estimated: meter.estimate(for: request, success: false), success: false)
+            throw error
+        }
+        UsageTracker.record(provider: config, kind: request.kind, usage: meter.usage,
+                            estimated: meter.estimate(for: request, success: true), success: true)
+    }
+}
+
+/// Reads an integer from a parsed JSON value (JSONSerialization yields NSNumber; null yields nil).
+func jsonInt(_ value: Any?) -> Int? {
+    (value as? NSNumber)?.intValue
 }

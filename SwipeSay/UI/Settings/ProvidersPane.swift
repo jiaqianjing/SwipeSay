@@ -348,7 +348,7 @@ struct ProviderDetailView: View {
             do {
                 let stream = client.stream(LLMRequest(
                     system: "Translate the user's text into Simplified Chinese. Output only the translation.",
-                    user: "It's raining cats and dogs.", maxTokens: 200))
+                    user: "It's raining cats and dogs.", maxTokens: 200, kind: .test))
                 for try await delta in stream {
                     if firstChunk == nil { firstChunk = clock.now }
                     reply += delta

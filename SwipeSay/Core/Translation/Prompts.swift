@@ -40,7 +40,7 @@ enum Prompts {
         var user = contextBlock(captured, useContext: useContext)
         if !user.isEmpty { user += "\n\n" }
         user += "<selected>\n\(captured.text)\n</selected>"
-        return LLMRequest(system: system, user: user, maxTokens: 4096)
+        return LLMRequest(system: system, user: user, maxTokens: 4096, kind: .translate)
     }
 
     // MARK: Word lookup (JSON)
@@ -67,7 +67,7 @@ enum Prompts {
         var user = contextBlock(captured, useContext: useContext)
         if !user.isEmpty { user += "\n\n" }
         user += "<selected>\(captured.text)</selected>"
-        return LLMRequest(system: system, user: user, expectsJSON: true, maxTokens: 1500)
+        return LLMRequest(system: system, user: user, expectsJSON: true, maxTokens: 1500, kind: .word)
     }
 
     // MARK: Capsule: key expressions + "is it worth analysing?" (JSON)
@@ -99,7 +99,7 @@ enum Prompts {
         var user = ""
         if let context, !context.isEmpty { user += "<context>\n\(context)\n</context>\n\n" }
         user += "<sentence>\n\(sentence)\n</sentence>\n<translation>\n\(translation)\n</translation>"
-        return LLMRequest(system: system, user: user, expectsJSON: true, maxTokens: 2000)
+        return LLMRequest(system: system, user: user, expectsJSON: true, maxTokens: 2000, kind: .keyItems)
     }
 
     // MARK: On-demand sentence analysis (JSON)
@@ -129,6 +129,6 @@ enum Prompts {
         """
         var user = "<sentence>\n\(sentence)\n</sentence>\n<translation>\n\(translation)\n</translation>"
         if let hint, !hint.isEmpty { user += "\n<focus>\(hint)</focus>" }
-        return LLMRequest(system: system, user: user, expectsJSON: true, maxTokens: 3000)
+        return LLMRequest(system: system, user: user, expectsJSON: true, maxTokens: 3000, kind: .analysis)
     }
 }

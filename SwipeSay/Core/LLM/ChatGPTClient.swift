@@ -9,15 +9,15 @@ struct ChatGPTClient: LLMClient {
     static let codexClientVersion = "0.169.0"
 
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
-        makeStream { continuation in
+        makeUsageStream(config: config, request: request) { continuation, meter in
             do {
                 do {
-                    try await run(request, continuation: continuation, forceRefresh: false, instructionsInInput: false)
+                    try await run(request, continuation: continuation, meter: meter, forceRefresh: false, instructionsInInput: false)
                 } catch LLMError.http(let code, _) where code == 401 {
-                    try await run(request, continuation: continuation, forceRefresh: true, instructionsInInput: false)
+                    try await run(request, continuation: continuation, meter: meter, forceRefresh: true, instructionsInInput: false)
                 } catch LLMError.http(let code, let body) where code == 400 && body.localizedCaseInsensitiveContains("instructions") {
                     // Some backend versions only accept their own system instructions; move ours into the input.
-                    try await run(request, continuation: continuation, forceRefresh: false, instructionsInInput: true)
+                    try await run(request, continuation: continuation, meter: meter, forceRefresh: false, instructionsInInput: true)
                 }
             } catch let error as LLMError where Self.isModelUnavailable(error) {
                 throw LLMError.modelUnavailable(config.model)
@@ -33,8 +33,18 @@ struct ChatGPTClient: LLMClient {
         ]
     }
 
+    /// Responses API `usage` (on the `response` of `response.completed`): `input_tokens` (cached included),
+    /// `input_tokens_details.cached_tokens`, `output_tokens` (reasoning included).
+    /// https://developers.openai.com/api/reference/resources/responses/streaming-events
+    static func parseUsage(_ usage: [String: Any]) -> TokenUsage? {
+        guard let input = jsonInt(usage["input_tokens"]), let output = jsonInt(usage["output_tokens"]) else { return nil }
+        let details = usage["input_tokens_details"] as? [String: Any]
+        return TokenUsage(input: input, output: output, cachedInput: jsonInt(details?["cached_tokens"]) ?? 0)
+    }
+
     private func run(_ request: LLMRequest,
                      continuation: AsyncThrowingStream<String, Error>.Continuation,
+                     meter: UsageMeter,
                      forceRefresh: Bool,
                      instructionsInInput: Bool) async throws {
         let creds = try await ChatGPTAuth.shared.validCredentials(forceRefresh: forceRefresh)
@@ -59,13 +69,22 @@ struct ChatGPTClient: LLMClient {
         headers["session_id"] = UUID().uuidString
         headers["Accept"] = "text/event-stream"
         let req = try HTTP.jsonRequest(try HTTP.url(config.baseURL, "/responses"), body: body, headers: headers)
-        try await HTTP.streamSSE(req, continuation: continuation) { payload in
+        try await HTTP.streamSSE(req, continuation: continuation, meter: meter) { payload in
             guard let json = HTTP.parse(payload), let type = json["type"] as? String else { return nil }
             switch type {
             case "response.output_text.delta":
                 return json["delta"] as? String
+            case "response.completed", "response.incomplete":
+                let response = json["response"] as? [String: Any]
+                if let usage = response?["usage"] as? [String: Any], let parsed = Self.parseUsage(usage) {
+                    meter.usage = parsed
+                }
+                return nil
             case "response.failed", "error":
                 let response = json["response"] as? [String: Any]
+                if let usage = response?["usage"] as? [String: Any], let parsed = Self.parseUsage(usage) {
+                    meter.usage = parsed
+                }
                 let err = (response?["error"] as? [String: Any]) ?? (json["error"] as? [String: Any])
                 if err?["code"] as? String == "model_not_found" { throw LLMError.modelUnavailable(config.model) }
                 throw LLMError.invalidResponse(err?["message"] as? String ?? json["message"] as? String ?? payload)
