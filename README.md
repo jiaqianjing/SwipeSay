@@ -221,13 +221,7 @@ Prerequisites on the release machine:
 
 - A Developer ID Application certificate in the login keychain.
 - A notarytool profile: `xcrun notarytool store-credentials <name> --apple-id … --team-id UBS9FUBNFR`.
-- The Sparkle EdDSA private key in the keychain under the account `swipesay`. The public key is in `SwipeSay/Info.plist`. **Back it up**: if the key is lost, existing installs can no longer accept updates. After building once, export it with:
-
-  ```bash
-  build/release/dd/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys --account swipesay -x swipesay-sparkle-key.txt
-  ```
-
-  Store the file somewhere safe, such as a password manager, and never commit it.
+- The Sparkle EdDSA private key in the login keychain, alongside the signing certificate. It is Sparkle's default account (`ed25519`), shared by all of the maintainer's apps; the public key is in `SwipeSay/Info.plist`. On a new machine, import the backup with `generate_keys -f <backup-file>`. Keep the backup in a password manager and never commit it.
 
 Stored data is versioned. `VocabularyStore.swift` explains how to add a schema version and a migration stage when a model changes.
 
