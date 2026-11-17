@@ -14,14 +14,15 @@
 #   NOTARY_PROFILE   notarytool keychain profile (required), created with `xcrun notarytool store-credentials`
 #   SIGN_IDENTITY    default "Developer ID Application"
 #   TEAM_ID          default UBS9FUBNFR. Must never change, or users lose permissions and keychain access.
-#   SPARKLE_ACCOUNT  keychain account of the EdDSA update key, default "swipesay"
+#   SPARKLE_ACCOUNT  keychain account of the EdDSA update key. Default "ed25519", Sparkle's default,
+#                    which holds the key shared by all of this developer's apps.
 set -euo pipefail
 
 REPO="jiaqianjing/SwipeSay"
 BUNDLE_ID="com.kenjia.swipesay"
 TEAM_ID="${TEAM_ID:-UBS9FUBNFR}"
 SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application}"
-SPARKLE_ACCOUNT="${SPARKLE_ACCOUNT:-swipesay}"
+SPARKLE_ACCOUNT="${SPARKLE_ACCOUNT:-ed25519}"
 MIN_MACOS="14.0"
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
