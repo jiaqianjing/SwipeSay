@@ -14,9 +14,15 @@ enum LLMError: LocalizedError {
     case invalidResponse(String)
     case refused(String)
     case auth(String)
+    /// The ChatGPT plan can't use this model (not in the plan, or retired).
+    case modelUnavailable(String)
 
     var errorDescription: String? {
         switch self {
+        case .modelUnavailable(let model):
+            let fallback = ProviderKind.chatGPT.defaultModel
+            let hint = model == fallback ? "换一个模型" : "换一个模型（如 \(fallback)）"
+            return "当前 ChatGPT 套餐不支持模型「\(model)」，或该模型已下线。请在 设置 › 模型服务 里\(hint)。"
         case .notConfigured: return "还没有可用的模型服务，请在设置里登录 ChatGPT 或填写 API Key。"
         case .http(let code, let body): return "请求失败（HTTP \(code)）：\(LLMError.summarize(body))"
         case .invalidResponse(let msg): return "无法解析模型返回：\(msg)"

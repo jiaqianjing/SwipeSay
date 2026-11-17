@@ -4,17 +4,33 @@ import Foundation
 struct ChatGPTClient: LLMClient {
     let config: ProviderConfig
 
+    /// Sent as `client_version` on the model catalog request, like Codex CLI does with its own version. The
+    /// backend may leave out models that need a newer client, so keep this near the latest stable Codex release.
+    static let codexClientVersion = "0.169.0"
+
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
         makeStream { continuation in
             do {
-                try await run(request, continuation: continuation, forceRefresh: false, instructionsInInput: false)
-            } catch LLMError.http(let code, _) where code == 401 {
-                try await run(request, continuation: continuation, forceRefresh: true, instructionsInInput: false)
-            } catch LLMError.http(let code, let body) where code == 400 && body.localizedCaseInsensitiveContains("instructions") {
-                // Some backend versions only accept their own system instructions; move ours into the input.
-                try await run(request, continuation: continuation, forceRefresh: false, instructionsInInput: true)
+                do {
+                    try await run(request, continuation: continuation, forceRefresh: false, instructionsInInput: false)
+                } catch LLMError.http(let code, _) where code == 401 {
+                    try await run(request, continuation: continuation, forceRefresh: true, instructionsInInput: false)
+                } catch LLMError.http(let code, let body) where code == 400 && body.localizedCaseInsensitiveContains("instructions") {
+                    // Some backend versions only accept their own system instructions; move ours into the input.
+                    try await run(request, continuation: continuation, forceRefresh: false, instructionsInInput: true)
+                }
+            } catch let error as LLMError where Self.isModelUnavailable(error) {
+                throw LLMError.modelUnavailable(config.model)
             }
         }
+    }
+
+    private func authHeaders(_ creds: (token: String, accountID: String)) -> [String: String] {
+        [
+            "Authorization": "Bearer \(creds.token)",
+            "chatgpt-account-id": creds.accountID,
+            "originator": "codex_cli_rs",
+        ]
     }
 
     private func run(_ request: LLMRequest,
@@ -38,14 +54,10 @@ struct ChatGPTClient: LLMClient {
             "reasoning": ["effort": "low"],
             "include": [],
         ]
-        let headers = [
-            "Authorization": "Bearer \(creds.token)",
-            "chatgpt-account-id": creds.accountID,
-            "OpenAI-Beta": "responses=experimental",
-            "originator": "codex_cli_rs",
-            "session_id": UUID().uuidString,
-            "Accept": "text/event-stream",
-        ]
+        var headers = authHeaders(creds)
+        headers["OpenAI-Beta"] = "responses=experimental"
+        headers["session_id"] = UUID().uuidString
+        headers["Accept"] = "text/event-stream"
         let req = try HTTP.jsonRequest(try HTTP.url(config.baseURL, "/responses"), body: body, headers: headers)
         try await HTTP.streamSSE(req, continuation: continuation) { payload in
             guard let json = HTTP.parse(payload), let type = json["type"] as? String else { return nil }
@@ -55,6 +67,7 @@ struct ChatGPTClient: LLMClient {
             case "response.failed", "error":
                 let response = json["response"] as? [String: Any]
                 let err = (response?["error"] as? [String: Any]) ?? (json["error"] as? [String: Any])
+                if err?["code"] as? String == "model_not_found" { throw LLMError.modelUnavailable(config.model) }
                 throw LLMError.invalidResponse(err?["message"] as? String ?? json["message"] as? String ?? payload)
             default:
                 return nil
@@ -62,8 +75,50 @@ struct ChatGPTClient: LLMClient {
         }
     }
 
+    /// The models this account can pick, from the same catalog endpoint Codex CLI uses
+    /// (`GET {base}/models?client_version=…`, answering `{"models": [{"slug", "visibility", "priority", …}]}`).
     func listModels() async throws -> [ModelInfo] {
-        // The Codex backend has no stable public listing; offer the known plan models.
-        ProviderKind.chatGPT.suggestedModels.map { ModelInfo(id: $0) }
+        do {
+            return try await fetchModels(forceRefresh: false)
+        } catch LLMError.http(let code, _) where code == 401 {
+            return try await fetchModels(forceRefresh: true)
+        }
+    }
+
+    private func fetchModels(forceRefresh: Bool) async throws -> [ModelInfo] {
+        let creds = try await ChatGPTAuth.shared.validCredentials(forceRefresh: forceRefresh)
+        let base = try HTTP.url(config.baseURL, "/models")
+        guard var comps = URLComponents(url: base, resolvingAgainstBaseURL: false) else {
+            throw LLMError.invalidResponse("无效的 Base URL：\(config.baseURL)")
+        }
+        comps.queryItems = (comps.queryItems ?? []) + [URLQueryItem(name: "client_version", value: Self.codexClientVersion)]
+        guard let url = comps.url else { throw LLMError.invalidResponse("无效的 Base URL：\(config.baseURL)") }
+        var req = URLRequest(url: url, timeoutInterval: 10)
+        for (k, v) in authHeaders(creds) { req.setValue(v, forHTTPHeaderField: k) }
+        let json = try await HTTP.getJSON(req)
+        guard let models = json["models"] as? [[String: Any]] else {
+            throw LLMError.invalidResponse("模型列表格式无法识别")
+        }
+        // Codex shows only `visibility: "list"` models in its picker, ordered by `priority` (lower first).
+        let listed = models
+            .filter { ($0["visibility"] as? String ?? "list") == "list" }
+            .compactMap { m -> (slug: String, priority: Int)? in
+                guard let slug = m["slug"] as? String, !slug.isEmpty else { return nil }
+                return (slug, m["priority"] as? Int ?? .max)
+            }
+            .sorted { $0.priority < $1.priority }
+            .map { ModelInfo(id: $0.slug) }
+        guard !listed.isEmpty else { throw LLMError.invalidResponse("服务没有返回可用模型") }
+        return listed
+    }
+
+    /// The backend's ways of saying this account can't use the requested model. Codex CLI's tests use
+    /// HTTP 400 `{"detail": "The 'x' model is not supported when using Codex with a ChatGPT account."}`
+    /// for a retired model, and `model_not_found` as the error code otherwise.
+    static func isModelUnavailable(_ error: LLMError) -> Bool {
+        guard case .http(let code, let body) = error, [400, 403, 404].contains(code) else { return false }
+        let text = body.lowercased()
+        return text.contains("model is not supported") || text.contains("model_not_found")
+            || text.contains("model not found")
     }
 }
