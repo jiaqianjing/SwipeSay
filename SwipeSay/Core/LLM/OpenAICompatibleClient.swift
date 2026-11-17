@@ -11,6 +11,13 @@ struct OpenAICompatibleClient: LLMClient {
         return h
     }
 
+    /// gpt-5+/gpt-6 and o-series accept `reasoning_effort`; gpt-4.x and `chat-latest` reject it.
+    static func isOpenAIReasoningModel(_ model: String) -> Bool {
+        let m = model.lowercased()
+        if m.contains("chat") { return false }
+        return m.hasPrefix("gpt-5") || m.hasPrefix("gpt-6") || m.range(of: #"^o\d"#, options: .regularExpression) != nil
+    }
+
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
         makeStream { continuation in
             var body: [String: Any] = [
@@ -24,6 +31,10 @@ struct OpenAICompatibleClient: LLMClient {
             // Native JSON mode is reliable on OpenAI and DeepSeek; other servers vary, so prompt-only there.
             if request.expectsJSON, config.kind == .openAI || config.kind == .deepSeek {
                 body["response_format"] = ["type": "json_object"]
+            }
+            // OpenAI reasoning models default to medium effort; translation doesn't need it.
+            if config.kind == .openAI, Self.isOpenAIReasoningModel(config.model) {
+                body["reasoning_effort"] = "low"
             }
             let url = try HTTP.url(config.baseURL, "/chat/completions")
             let req = try HTTP.jsonRequest(url, body: body, headers: headers)
