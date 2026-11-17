@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 enum SettingsTab: String, CaseIterable, Identifiable {
-    case general, providers, shortcuts, learning
+    case general, providers, shortcuts, learning, usage
 
     var id: String { rawValue }
 
@@ -12,6 +12,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .providers: return "模型服务"
         case .shortcuts: return "快捷键"
         case .learning: return "学习"
+        case .usage: return "用量"
         }
     }
 
@@ -21,6 +22,7 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         case .providers: return "cpu"
         case .shortcuts: return "command"
         case .learning: return "graduationcap"
+        case .usage: return "chart.xyaxis.line"
         }
     }
 }

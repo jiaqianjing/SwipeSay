@@ -15,7 +15,7 @@ struct MockClient: LLMClient {
     }()
 
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
-        makeStream { continuation in
+        makeUsageStream(config: Self.config, request: request) { continuation, meter in
             let reply: String
             if request.system.contains("learner's dictionary") {
                 reply = #"{"term":"ubiquitous","lemma":"ubiquitous","phonetic":"/juːˈbɪkwɪtəs/","context_meaning":"无处不在的","senses":[{"pos":"adj.","meaning":"普遍存在的；无所不在的"}],"example":{"source":"Smartphones have become ubiquitous in modern life.","target":"智能手机在现代生活中已无处不在。"},"note":"常与 become 连用；名词形式 ubiquity。"}"#
@@ -26,6 +26,9 @@ struct MockClient: LLMClient {
             } else {
                 reply = "她刚一踏进那栋房子，就感到一种难以名状的恐惧。"
             }
+            // Made-up counts (roughly 4 characters per token) so the usage page has data in mock mode.
+            meter.usage = TokenUsage(input: (request.system.count + request.user.count) / 4 + 12,
+                                     output: reply.count / 2 + 4)
             if request.expectsJSON {
                 try await Task.sleep(nanoseconds: 600_000_000)
                 continuation.yield(reply)
