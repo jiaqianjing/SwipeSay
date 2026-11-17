@@ -185,6 +185,8 @@ struct GeneralSettingsPane: View {
                 }
             }
 
+            CacheSettingsCard()
+
             UpdateSettingsCard()
         }
         .onReceive(timer) { _ in
@@ -392,6 +394,65 @@ private struct SpeechVoiceRow: View {
         guard let best = Speaker.bestVoice(for: language) else { return "未安装可用的声音" }
         let name = Speaker.displayName(best)
         return stored == nil ? "当前使用：\(name)" : "所选声音已被移除，改用：\(name)"
+    }
+}
+
+// MARK: - Translation cache
+
+struct CacheSettingsCard: View {
+    @EnvironmentObject private var settings: AppSettings
+    @ObservedObject private var cache = TranslationCache.shared
+    @State private var confirmClear = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            SettingsCard(header: "缓存") {
+                SettingsRow(title: "翻译缓存", subtitle: "再次划选相同的内容时直接显示上次的结果，不再请求模型") {
+                    Toggle("", isOn: $settings.cacheEnabled).labelsHidden().toggleStyle(.switch)
+                }
+                Divider()
+                SettingsRow(title: "保留时间", subtitle: "超过保留时间的结果会自动清理") {
+                    Picker("", selection: $settings.cacheRetention) {
+                        ForEach(CacheRetention.allCases) { Text($0.displayName).tag($0) }
+                    }
+                    .labelsHidden().frame(width: 150)
+                }
+                Divider()
+                SettingsRow(title: "大小上限", subtitle: "超出上限时先清理最久未用的结果") {
+                    Picker("", selection: $settings.cacheSizeLimit) {
+                        ForEach(CacheSizeLimit.allCases) { Text($0.displayName).tag($0) }
+                    }
+                    .labelsHidden().frame(width: 150)
+                }
+                Divider()
+                SettingsRow(title: "已缓存 \(cache.entryCount) 条", subtitle: statsSubtitle) {
+                    Button("立即清空…") { confirmClear = true }
+                        .controlSize(.small)
+                        .disabled(cache.entryCount == 0)
+                }
+            }
+            Text("缓存条目包含原文和译文，只保存在这台 Mac 上。")
+                .font(.system(size: 11)).foregroundStyle(.secondary)
+                .padding(.leading, 4)
+        }
+        .onAppear { cache.refreshStats() }
+        .onChange(of: settings.cacheRetention) { cache.pruneExpired() }
+        .onChange(of: settings.cacheSizeLimit) { cache.sizeLimitChanged() }
+        .confirmationDialog("清空翻译缓存？", isPresented: $confirmClear) {
+            Button("清空", role: .destructive) { cache.clear() }
+        } message: {
+            Text("将删除本机缓存的全部 \(cache.entryCount) 条结果，无法撤销。")
+        }
+    }
+
+    private var statsSubtitle: String {
+        // Binary units, to match the limit options (1 GB = 1024 MB).
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .memory
+        formatter.allowsNonnumericFormatting = false // "0 KB", not "Zero KB"
+        let size = formatter.string(fromByteCount: Int64(max(cache.approxBytes, 0)))
+        let usage = "约 \(size) / \(settings.cacheSizeLimit.displayName) · 累计命中 \(cache.totalHits) 次"
+        return cache.isMaintaining ? usage + " · 整理中…" : usage
     }
 }
 

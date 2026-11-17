@@ -2,6 +2,10 @@ import Foundation
 
 /// All prompts live here so they are easy to tune.
 enum Prompts {
+    /// Part of every translation-cache key. Bump it whenever a prompt changes in a way that should make
+    /// previously cached results stale; old entries then simply stop matching and age out.
+    static let version = 1
+
     struct Direction {
         var source: AppLanguage?
         var target: AppLanguage
