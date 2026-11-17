@@ -87,10 +87,30 @@ struct ProviderDetailView: View {
     @State private var apiKey = ""
     @State private var fetchedModels: [String] = []
     @State private var fetching = false
+    /// Quiet one-line status under the model field ("12 models · 0.35 s" or why fetching failed).
+    @State private var modelNote: ModelNote?
     @State private var testState: TestState = .idle
     @State private var confirmDelete = false
 
-    enum TestState: Equatable { case idle, running, success(String), failure(String) }
+    /// Result text plus a timing line ("首字 0.31 s · 总计 1.1 s") shown underneath in small grey type.
+    enum TestState: Equatable { case idle, running, success(String, timing: String), failure(String, timing: String) }
+    struct ModelNote: Equatable { var text: String; var isError: Bool }
+
+    /// Providers already tested in this app session. The first test also pays for DNS and TLS setup, so it's labelled.
+    @MainActor private static var warmedUp: Set<UUID> = []
+
+    /// Whether we have what a request needs. Computed from view state, not the keychain, so it updates as you type.
+    private var hasCredentials: Bool {
+        switch config.kind {
+        case .chatGPT: return auth.isSignedIn
+        case .openAICompatible: return !config.baseURL.trimmingCharacters(in: .whitespaces).isEmpty
+        default: return !apiKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+    }
+
+    private var canTest: Bool {
+        hasCredentials && !config.model.trimmingCharacters(in: .whitespaces).isEmpty
+    }
 
     var body: some View {
         ScrollView {
@@ -112,9 +132,12 @@ struct ProviderDetailView: View {
                         Label("默认服务", systemImage: "checkmark.seal.fill")
                             .font(.system(size: 11.5, weight: .medium)).foregroundStyle(Theme.accent)
                     } else {
-                        Button("设为默认") { store.activeID = config.id }
-                            .controlSize(.small)
-                            .disabled(!config.isReady)
+                        Button("设为默认") {
+                            persistKey()
+                            store.activeID = config.id
+                        }
+                        .controlSize(.small)
+                        .disabled(!canTest)
                     }
                 }
                 .padding(.top, 34)
@@ -129,8 +152,7 @@ struct ProviderDetailView: View {
                             SecureField("sk-…", text: $apiKey)
                                 .textFieldStyle(.roundedBorder)
                                 .frame(maxWidth: .infinity)
-                                .onSubmit { config.apiKey = apiKey }
-                                .onChange(of: apiKey) { _, new in config.apiKey = new }
+                                .onSubmit { persistKey() }
                         }
                         Divider()
                     }
@@ -141,22 +163,31 @@ struct ProviderDetailView: View {
                     }
                     Divider()
                     FieldRow(title: "模型") {
-                        HStack(spacing: 6) {
-                            TextField("模型 ID", text: $config.model)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(maxWidth: .infinity)
-                            Menu {
-                                let models = fetchedModels.isEmpty ? config.kind.suggestedModels : fetchedModels
-                                ForEach(models, id: \.self) { m in Button(m) { config.model = m } }
-                                if config.kind != .chatGPT {
-                                    Divider()
-                                    Button("从服务获取模型列表") { fetchModels() }
+                        VStack(alignment: .leading, spacing: 5) {
+                            HStack(spacing: 6) {
+                                TextField("模型 ID", text: $config.model)
+                                    .textFieldStyle(.roundedBorder)
+                                    .frame(maxWidth: .infinity)
+                                Menu {
+                                    let models = fetchedModels.isEmpty ? config.kind.suggestedModels : fetchedModels
+                                    ForEach(models, id: \.self) { m in Button(m) { config.model = m } }
+                                    if config.kind != .chatGPT {
+                                        Divider()
+                                        Button("从服务获取模型列表") { Task { await fetchModels() } }
+                                            .disabled(!hasCredentials)
+                                    }
+                                } label: {
+                                    if fetching { ProgressView().controlSize(.small) } else { Image(systemName: "list.bullet") }
                                 }
-                            } label: {
-                                if fetching { ProgressView().controlSize(.small) } else { Image(systemName: "list.bullet") }
+                                .menuStyle(.borderlessButton)
+                                .fixedSize()
                             }
-                            .menuStyle(.borderlessButton)
-                            .fixedSize()
+                            if let modelNote {
+                                Text(modelNote.text)
+                                    .font(.system(size: 10.5))
+                                    .foregroundStyle(modelNote.isError ? Color.orange : Color.secondary)
+                                    .lineLimit(2)
+                            }
                         }
                     }
                 }
@@ -167,14 +198,14 @@ struct ProviderDetailView: View {
                     } label: {
                         Label("测试连接", systemImage: "bolt.horizontal")
                     }
-                    .disabled(testState == .running || !config.isReady)
+                    .disabled(testState == .running || !canTest)
                     switch testState {
                     case .idle: EmptyView()
                     case .running: ProgressView().controlSize(.small)
-                    case .success(let s):
-                        Label(s, systemImage: "checkmark.circle.fill").foregroundStyle(.green).font(.system(size: 12)).lineLimit(2)
-                    case .failure(let s):
-                        Label(s, systemImage: "xmark.octagon.fill").foregroundStyle(.red).font(.system(size: 12)).lineLimit(3)
+                    case .success(let s, let timing):
+                        TestResultLabel(text: s, timing: timing, symbol: "checkmark.circle.fill", color: .green, lines: 2)
+                    case .failure(let s, let timing):
+                        TestResultLabel(text: s, timing: timing, symbol: "xmark.octagon.fill", color: .red, lines: 3)
                     }
                     Spacer()
                     Button(role: .destructive) { confirmDelete = true } label: { Image(systemName: "trash") }
@@ -186,8 +217,31 @@ struct ProviderDetailView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 24)
         }
-        .onAppear { apiKey = config.apiKey ?? "" }
+        .onAppear {
+            apiKey = config.apiKey ?? ""
+            #if DEBUG
+            // `-SwipeSayDemoRunTest YES` (mock mode) presses 测试连接 once the pane opens, for screenshots.
+            if MockClient.isEnabled, UserDefaults.standard.bool(forKey: "SwipeSayDemoRunTest") {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) { runTest() }
+            }
+            #endif
+        }
+        .onDisappear { persistKey() }
         .onChange(of: config) { _, new in store.update(new) }
+        // Typing pauses for 0.6 s → save the key once and refresh the model list. Changing the key or the
+        // Base URL again cancels the pending run, so a half-pasted key never gets used.
+        .task(id: "\(apiKey)|\(config.baseURL)") {
+            guard config.kind != .chatGPT else { return }
+            try? await Task.sleep(for: .milliseconds(600))
+            guard !Task.isCancelled else { return }
+            persistKey()
+            guard hasCredentials else {
+                fetchedModels = []
+                modelNote = nil
+                return
+            }
+            await fetchModels()
+        }
         .confirmationDialog("删除「\(config.name)」？", isPresented: $confirmDelete) {
             Button("删除", role: .destructive) { store.remove(config.id) }
         }
@@ -201,32 +255,68 @@ struct ProviderDetailView: View {
         }
     }
 
-    private func fetchModels() {
+    /// Writes the typed key to the keychain if it changed, and refreshes the provider list's ready state.
+    private func persistKey() {
+        guard config.kind != .chatGPT else { return }
+        let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard key != (config.apiKey ?? "") else { return }
+        config.apiKey = key.isEmpty ? nil : key
+        // The key lives in the keychain, not in `config`, so tell list rows and `active` to re-read it.
+        store.objectWillChange.send()
+    }
+
+    private func fetchModels() async {
+        persistKey()
         fetching = true
-        Task {
-            defer { fetching = false }
-            do {
-                fetchedModels = try await LLMClientFactory.make(config).listModels()
-                testState = .success("获取到 \(fetchedModels.count) 个模型")
-            } catch {
-                testState = .failure(error.localizedDescription)
-            }
+        defer { fetching = false }
+        let started = ContinuousClock.now
+        do {
+            let models = try await LLMClientFactory.make(config).listModels()
+            guard !Task.isCancelled else { return }
+            fetchedModels = models
+            modelNote = ModelNote(text: "已获取 \(models.count) 个模型 · \(Self.format(ContinuousClock.now - started))",
+                                  isError: false)
+        } catch {
+            guard !Task.isCancelled else { return }
+            modelNote = ModelNote(text: "无法获取模型列表：\(error.localizedDescription)", isError: true)
         }
     }
 
     private func runTest() {
+        persistKey()
         testState = .running
         let client = LLMClientFactory.make(config)
+        let id = config.id
+        let cold = !Self.warmedUp.contains(id)
         Task {
+            let clock = ContinuousClock()
+            let started = clock.now
+            var firstChunk: ContinuousClock.Instant?
+            var reply = ""
             do {
-                let reply = try await client.complete(LLMRequest(
+                let stream = client.stream(LLMRequest(
                     system: "Translate the user's text into Simplified Chinese. Output only the translation.",
                     user: "It's raining cats and dogs.", maxTokens: 200))
-                testState = .success("成功：\(reply.trimmingCharacters(in: .whitespacesAndNewlines).prefix(40))")
+                for try await delta in stream {
+                    if firstChunk == nil { firstChunk = clock.now }
+                    reply += delta
+                }
+                let total = clock.now - started
+                Self.warmedUp.insert(id)
+                var timing = "首字 \(Self.format((firstChunk ?? clock.now) - started)) · 总计 \(Self.format(total))"
+                if cold { timing += "（首次含建连）" }
+                let text = reply.trimmingCharacters(in: .whitespacesAndNewlines).prefix(60)
+                testState = .success("成功：\(text)", timing: timing)
             } catch {
-                testState = .failure(error.localizedDescription)
+                testState = .failure(error.localizedDescription, timing: "失败前用时 \(Self.format(clock.now - started))")
             }
         }
+    }
+
+    /// "0.42 s" under a second, "1.3 s" above.
+    static func format(_ d: Duration) -> String {
+        let s = Double(d.components.seconds) + Double(d.components.attoseconds) / 1e18
+        return s < 1 ? String(format: "%.2f s", s) : String(format: "%.1f s", s)
     }
 }
 
@@ -298,5 +388,25 @@ struct FieldRow<Field: View>: View {
             field
         }
         .padding(.vertical, 9)
+    }
+}
+
+/// 测试连接 result: an icon and message, with the timing on its own line so the message isn't cut off.
+private struct TestResultLabel: View {
+    var text: String
+    var timing: String
+    var symbol: String
+    var color: Color
+    var lines: Int
+
+    var body: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Image(systemName: symbol).foregroundStyle(color)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(text).foregroundStyle(color).lineLimit(lines)
+                Text(timing).font(.system(size: 10.5)).foregroundStyle(.secondary).monospacedDigit()
+            }
+        }
+        .font(.system(size: 12))
     }
 }
