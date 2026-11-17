@@ -6,6 +6,21 @@
     <description><![CDATA[SwipeSay updates]]></description>
     <language>zh-CN</language>
     <item>
+      <title>SwipeSay 0.2.1</title>
+      <pubDate>Tue, 17 Nov 2026 14:09:16 GMT</pubDate>
+      <sparkle:version>3</sparkle:version>
+      <sparkle:shortVersionString>0.2.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[<div class="markdown-heading"><h2 class="heading-element">说明</h2><a id="user-content-说明" class="anchor" aria-label="Permalink: 说明" href="#说明"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<ul>
+<li>这一版没有功能变化，只用来验证自动更新是否正常。</li>
+<li>如果你正在用 0.2.0，会收到这次更新：点「安装更新」，SwipeSay 会自动下载、安装并重新启动。</li>
+<li>已授予的权限、保存的 API Key 和生词本升级后都会保留。</li>
+</ul>
+]]></description>
+      <enclosure url="https://github.com/jiaqianjing/SwipeSay/releases/download/v0.2.1/SwipeSay-0.2.1.dmg" type="application/octet-stream" sparkle:edSignature="rgCxU6UluNV+SGS/s8Dr/9UJrRca4AN0da0+gddHZiTi//Tahf/oQpZ9j5JSh8wKJlpRuJhIqjkNwuQnsQSFDQ==" length="2414017" />
+    </item>
+    <item>
       <title>SwipeSay 0.2.0</title>
       <pubDate>Tue, 17 Nov 2026 11:48:32 GMT</pubDate>
       <sparkle:version>2</sparkle:version>
