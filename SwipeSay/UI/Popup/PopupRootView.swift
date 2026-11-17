@@ -223,6 +223,20 @@ struct PopupRootView: View {
             Text(model.providerLabel.isEmpty ? "未配置模型" : model.providerLabel)
                 .lineLimit(1)
             Spacer()
+            if let cachedAt = model.cachedAt {
+                Text("⚡ 来自缓存 · \(TranslationCachePolicy.age(since: cachedAt))")
+                    .lineLimit(1)
+                    .layoutPriority(1)
+                    .help("结果来自本机缓存，没有请求模型")
+                Button { model.retranslate() } label: {
+                    Text("重新翻译").font(.system(size: 11, weight: .semibold))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(Theme.accent)
+                .fixedSize()
+                .help("忽略缓存重新请求，并更新缓存")
+                .padding(.trailing, 4)
+            }
             if model.isInputMode {
                 Button { model.submitInput() } label: {
                     Text("翻译 ↩").font(.system(size: 11, weight: .semibold))

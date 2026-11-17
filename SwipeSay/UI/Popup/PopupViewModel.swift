@@ -31,7 +31,11 @@ final class PopupViewModel: ObservableObject {
     @Published var pinned = false
     @Published var sourceExpanded = false
     @Published var providerLabel = ""
+    /// Set when the main result (sentence or word card) came from the local cache: when it was produced.
+    @Published var cachedAt: Date?
 
+    /// After "重新翻译", key items and analysis for this result also skip the cache (and overwrite it).
+    private var bypassCache = false
     private var translateTask: Task<Void, Never>?
     private var keyItemsTask: Task<Void, Never>?
     private var analysisTask: Task<Void, Never>?
@@ -82,7 +86,12 @@ final class PopupViewModel: ObservableObject {
         translate()
     }
 
-    func translate() {
+    /// Ignores the cache for this result and overwrites the cached entry with the fresh one.
+    func retranslate() {
+        translate(bypassCache: true)
+    }
+
+    func translate(bypassCache: Bool = false) {
         cancelAll()
         plan = TranslationService.plan(for: sourceText)
         if let override = targetOverride { plan.direction.target = override }
@@ -94,6 +103,8 @@ final class PopupViewModel: ObservableObject {
         analysisPhase = .idle
         capsuleExpanded = false
         notConfigured = false
+        cachedAt = nil
+        self.bypassCache = bypassCache
         phase = .loading
 
         let captured = self.captured
@@ -103,17 +114,34 @@ final class PopupViewModel: ObservableObject {
             do {
                 let (client, config) = try TranslationService.activeClient()
                 self?.providerLabel = config.model
+                let cache = TranslationCache.shared
                 switch plan.mode {
                 case .word:
+                    let context = useContext && captured.hasUsefulContext ? captured.context : nil
+                    let key = TranslationCacheKey.word(text: captured.text, context: context, target: plan.direction.target,
+                                                       native: plan.direction.native, model: config.model)
+                    if !bypassCache,
+                       let hit = cache.lookup(key, decode: { try JSONExtractor.decode(WordResult.self, from: $0) }) {
+                        UsageTracker.recordCacheHit(provider: config, kind: .word)
+                        self?.showWord(hit.value, cachedAt: hit.createdAt)
+                        return
+                    }
                     let request = Prompts.word(captured, direction: plan.direction, useContext: useContext)
                     let raw = try await client.complete(request)
                     try Task.checkCancellation()
                     let result = try JSONExtractor.decode(WordResult.self, from: raw)
-                    self?.word = result
-                    self?.translation = result.contextMeaning ?? ""
-                    self?.phase = .done
-                    self?.autoSaveWord(result)
+                    cache.store(key, source: captured.text, payload: raw)
+                    self?.showWord(result, cachedAt: nil)
                 case .sentence:
+                    let key = TranslationCacheKey.sentence(text: captured.text, target: plan.direction.target,
+                                                           model: config.model)
+                    if !bypassCache, let hit = cache.lookup(key, decode: { $0 }) {
+                        UsageTracker.recordCacheHit(provider: config, kind: .translate)
+                        self?.translation = hit.value
+                        self?.cachedAt = hit.createdAt
+                        self?.phase = .done
+                        return
+                    }
                     let request = Prompts.translation(captured, direction: plan.direction, useContext: useContext)
                     for try await delta in client.stream(request) {
                         guard let self else { return }
@@ -121,8 +149,10 @@ final class PopupViewModel: ObservableObject {
                         self.translation += delta
                     }
                     try Task.checkCancellation()
-                    self?.translation = self?.translation.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                    self?.phase = .done
+                    guard let self else { return }
+                    self.translation = self.translation.trimmingCharacters(in: .whitespacesAndNewlines)
+                    self.phase = .done
+                    cache.store(key, source: captured.text, payload: self.translation)
                 }
             } catch is CancellationError {
             } catch {
@@ -131,6 +161,14 @@ final class PopupViewModel: ObservableObject {
                 self?.phase = .failed(error.localizedDescription)
             }
         }
+    }
+
+    private func showWord(_ result: WordResult, cachedAt: Date?) {
+        word = result
+        translation = result.contextMeaning ?? ""
+        self.cachedAt = cachedAt
+        phase = .done
+        autoSaveWord(result)
     }
 
     func toggleCapsule() {
@@ -146,13 +184,25 @@ final class PopupViewModel: ObservableObject {
         let context = usedContext ? captured.context : nil
         let native = settings.targetLanguage
         let level = settings.learnerLevel
+        let bypassCache = self.bypassCache
         keyItemsTask = Task { [weak self] in
             do {
-                let (client, _) = try TranslationService.activeClient()
-                let raw = try await client.complete(Prompts.keyItems(sentence: sentence, translation: translation,
-                                                                     context: context, native: native, level: level))
-                try Task.checkCancellation()
-                let result = try JSONExtractor.decode(KeyItemsResult.self, from: raw)
+                let (client, config) = try TranslationService.activeClient()
+                let cache = TranslationCache.shared
+                let key = TranslationCacheKey.keyItems(sentence: sentence, translation: translation, native: native,
+                                                       level: level, model: config.model)
+                let result: KeyItemsResult
+                if !bypassCache,
+                   let hit = cache.lookup(key, decode: { try JSONExtractor.decode(KeyItemsResult.self, from: $0) }) {
+                    UsageTracker.recordCacheHit(provider: config, kind: .keyItems)
+                    result = hit.value
+                } else {
+                    let raw = try await client.complete(Prompts.keyItems(sentence: sentence, translation: translation,
+                                                                         context: context, native: native, level: level))
+                    try Task.checkCancellation()
+                    result = try JSONExtractor.decode(KeyItemsResult.self, from: raw)
+                    cache.store(key, source: sentence, payload: raw)
+                }
                 withAnimation(.easeOut(duration: 0.2)) {
                     self?.keyItems = result
                     self?.keyItemsPhase = .done
@@ -177,13 +227,25 @@ final class PopupViewModel: ObservableObject {
         let hint = keyItems?.analysisHint
         let native = settings.targetLanguage
         let level = settings.learnerLevel
+        let bypassCache = self.bypassCache
         analysisTask = Task { [weak self] in
             do {
-                let (client, _) = try TranslationService.activeClient()
-                let raw = try await client.complete(Prompts.analysis(sentence: sentence, translation: translation,
-                                                                     hint: hint, native: native, level: level))
-                try Task.checkCancellation()
-                let result = try JSONExtractor.decode(SentenceAnalysis.self, from: raw)
+                let (client, config) = try TranslationService.activeClient()
+                let cache = TranslationCache.shared
+                let key = TranslationCacheKey.analysis(sentence: sentence, translation: translation, hint: hint,
+                                                       native: native, level: level, model: config.model)
+                let result: SentenceAnalysis
+                if !bypassCache,
+                   let hit = cache.lookup(key, decode: { try JSONExtractor.decode(SentenceAnalysis.self, from: $0) }) {
+                    UsageTracker.recordCacheHit(provider: config, kind: .analysis)
+                    result = hit.value
+                } else {
+                    let raw = try await client.complete(Prompts.analysis(sentence: sentence, translation: translation,
+                                                                         hint: hint, native: native, level: level))
+                    try Task.checkCancellation()
+                    result = try JSONExtractor.decode(SentenceAnalysis.self, from: raw)
+                    cache.store(key, source: sentence, payload: raw)
+                }
                 withAnimation(.easeOut(duration: 0.2)) {
                     self?.analysis = result
                     self?.analysisPhase = .done

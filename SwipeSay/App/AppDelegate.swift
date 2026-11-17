@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         AppDelegate.shared = self
         settings.applyActivationPolicy()
         _ = VocabularyStore.shared
+        _ = TranslationCache.shared // schedules expiry pruning and eviction shortly after launch
         Updater.shared.start()
 
         registerHotkeys()
