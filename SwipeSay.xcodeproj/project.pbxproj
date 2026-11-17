@@ -12,6 +12,7 @@
 		16353878435B9C105198F6ED /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270044BC0D3DF3E03905DF17 /* SettingsView.swift */; };
 		1EA586DE612149CCF59551D5 /* GeminiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505D90276350B83AD5BACFD5 /* GeminiClient.swift */; };
 		27CF0A56032E6BD01B61C427 /* VocabularyStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6AD0D2450DDACE03484F4876 /* VocabularyStore.swift */; };
+		302D29ADFD915CCF91FA33EC /* Updater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D501C36E351019FF70DB21D /* Updater.swift */; };
 		39A2FADCB3D2DA304B2940D5 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D012DAA05B026AE7F2BE673 /* AppSettings.swift */; };
 		3BBFECD579E81844B6CCE5EC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6CABD0BE7C0668E763891826 /* Assets.xcassets */; };
 		3E60912C4772C3B6C05CCE7B /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B90F2745BA95EC13D128AED /* Keychain.swift */; };
@@ -31,6 +32,7 @@
 		B24DA39E0C929A6080E57CD5 /* SelectionCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A38F562DA6573DA31E21595 /* SelectionCapture.swift */; };
 		B2EF437DCAAC60CA6AC242BF /* PopupController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A576BC517976F91D8392FD0 /* PopupController.swift */; };
 		C0D0AD8154E7A13AE86817B2 /* Shortcut.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32DB37A086C0B677C6D34D29 /* Shortcut.swift */; };
+		D72E43035EB3CD215BD6F91D /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 276CBCF37C69DCEB9441219A /* Sparkle */; };
 		DA0D12C4BE61B99BCC500159 /* PopupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9E6E65CEE7E2D2A425E46E5 /* PopupViewModel.swift */; };
 		E52B548BF0CF88C939EB179E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F645E31BBE6A9ED5662E9BD5 /* AppDelegate.swift */; };
 		F1DA0E2555F7DEB818DB6032 /* VocabularyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 949269E8525735EAB419F55B /* VocabularyView.swift */; };
@@ -48,6 +50,7 @@
 		229D11935BE71DB7C14E47CF /* PopupRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupRootView.swift; sourceTree = "<group>"; };
 		24000D579015EE9B0B0468E9 /* ProviderConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderConfig.swift; sourceTree = "<group>"; };
 		270044BC0D3DF3E03905DF17 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		2D501C36E351019FF70DB21D /* Updater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Updater.swift; sourceTree = "<group>"; };
 		32DB37A086C0B677C6D34D29 /* Shortcut.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shortcut.swift; sourceTree = "<group>"; };
 		34A4894BA44F2787D24D3855 /* Prompts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Prompts.swift; sourceTree = "<group>"; };
 		3B4A2BCFF905E3139551513A /* LLMClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMClient.swift; sourceTree = "<group>"; };
@@ -73,6 +76,17 @@
 		F645E31BBE6A9ED5662E9BD5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFrameworksBuildPhase section */
+		C5A1C979DF2D6016D00855D6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D72E43035EB3CD215BD6F91D /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
 /* Begin PBXGroup section */
 		1918D838B60364D54FFAAB6D /* Core */ = {
 			isa = PBXGroup;
@@ -82,6 +96,7 @@
 				5E127FADDBD577C702B2F699 /* LLM */,
 				6F653236C1B5AD13E9ABA76B /* Settings */,
 				BD17C87E0E236366C07B1DA0 /* Translation */,
+				E8A84BADC51E04BED843D606 /* Update */,
 				527B61E679E69E99A95EB047 /* Vocabulary */,
 			);
 			path = Core;
@@ -222,6 +237,14 @@
 			path = Settings;
 			sourceTree = "<group>";
 		};
+		E8A84BADC51E04BED843D606 /* Update */ = {
+			isa = PBXGroup;
+			children = (
+				2D501C36E351019FF70DB21D /* Updater.swift */,
+			);
+			path = Update;
+			sourceTree = "<group>";
+		};
 		FA6FD291CC385BF9FB493D1F /* Hotkey */ = {
 			isa = PBXGroup;
 			children = (
@@ -240,6 +263,7 @@
 			buildPhases = (
 				ABD8E6B83CBF5DFD3392B9DE /* Sources */,
 				CF83BC3FB2026089588EF867 /* Resources */,
+				C5A1C979DF2D6016D00855D6 /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -247,6 +271,7 @@
 			);
 			name = SwipeSay;
 			packageProductDependencies = (
+				276CBCF37C69DCEB9441219A /* Sparkle */,
 			);
 			productName = SwipeSay;
 			productReference = ECCBF007C63BCF264E76FD5B /* SwipeSay.app */;
@@ -272,6 +297,9 @@
 			);
 			mainGroup = 7E1E865BD96EABB09E3C7A7E;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AB45C92FD02003FC235C58B1 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = A460CFD18AD84D6EF5C59587 /* Products */;
 			projectDirPath = "";
@@ -324,6 +352,7 @@
 				FEF6E686BE0AD0238D1B1406 /* Theme.swift in Sources */,
 				A6697B8F43DE2372F54B35A2 /* TranslationModels.swift in Sources */,
 				AF55CD92A1CCC9B2372C6A45 /* TranslationService.swift in Sources */,
+				302D29ADFD915CCF91FA33EC /* Updater.swift in Sources */,
 				27CF0A56032E6BD01B61C427 /* VocabularyStore.swift in Sources */,
 				F1DA0E2555F7DEB818DB6032 /* VocabularyView.swift in Sources */,
 				92282CC24F60AC8D23CA4387 /* WindowManager.swift in Sources */,
@@ -464,6 +493,7 @@
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SwipeSay/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = SwipeSay;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -485,6 +515,7 @@
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SwipeSay/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = SwipeSay;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -520,6 +551,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AB45C92FD02003FC235C58B1 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = exactVersion;
+				version = 2.10.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		276CBCF37C69DCEB9441219A /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AB45C92FD02003FC235C58B1 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 781E3F961AA6B200F9B04101 /* Project object */;
 }

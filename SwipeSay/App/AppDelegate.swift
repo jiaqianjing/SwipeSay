@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         AppDelegate.shared = self
         settings.applyActivationPolicy()
         _ = VocabularyStore.shared
+        Updater.shared.start()
 
         registerHotkeys()
         Publishers.Merge3(settings.$selectionShortcut, settings.$screenshotShortcut, settings.$inputShortcut)

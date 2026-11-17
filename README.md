@@ -8,7 +8,7 @@
 
 划词即译 · 结合上下文 · 顺手攒下值得学的表达
 
-[![Download](https://img.shields.io/badge/Download-v0.1.0-F2645C?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/jiaqianjing/SwipeSay/releases/latest)
+[![Download](https://img.shields.io/github/v/release/jiaqianjing/SwipeSay?style=for-the-badge&label=Download&color=F2645C&logo=apple&logoColor=white)](https://github.com/jiaqianjing/SwipeSay/releases/latest)
 
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-111111?logo=apple&logoColor=white)
 ![Swift](https://img.shields.io/badge/Swift-SwiftUI-F05138?logo=swift&logoColor=white)
@@ -93,13 +93,15 @@ The defaults are each provider's fast, inexpensive tier, because translation is 
 
 ## Install
 
-1. Download **[SwipeSay-0.1.0.dmg](https://github.com/jiaqianjing/SwipeSay/releases/latest)** and drag SwipeSay into Applications.
+1. Download the latest **[SwipeSay DMG](https://github.com/jiaqianjing/SwipeSay/releases/latest)** and drag SwipeSay into Applications.
 2. On first launch, grant these in System Settings → Privacy & Security:
    - **Accessibility**, to read selections and their context. On macOS 27 it is listed as **Device Control and Data Access** (设备控制和数据访问).
    - **Screen Recording**, for screenshot translation. You may need to relaunch SwipeSay after granting it.
 3. Choose a provider in Settings → 模型服务.
 
 The app is signed with Developer ID and notarized by Apple. It is Universal (Apple silicon and Intel) and requires macOS 14 or later.
+
+**Updates**: from 0.2.0 on, SwipeSay updates itself through [Sparkle](https://sparkle-project.org). It checks once a day. You can check by hand from the menu bar (检查更新…) or in Settings → 通用 → 更新, where you can also turn on automatic download. Updates are verified with an EdDSA signature on top of Apple's notarization, and your permissions, API keys and vocabulary carry over. Versions before 0.2.0 need to be replaced by hand once.
 
 <details>
 <summary><b>Accessibility is on but SwipeSay still says it's missing?</b></summary>
@@ -196,6 +198,38 @@ Mock mode never touches the keychain, and it keeps providers in memory, so your 
 <br>
 
 Reading other apps' selections (`AXUIElement`), posting ⌘C as a fallback, and the localhost OAuth callback are not allowed in the sandbox. That is why SwipeSay ships outside the Mac App Store, as Bob and Easydict do. Hardened Runtime stays on.
+
+</details>
+
+<details>
+<summary><b>Releasing (maintainers)</b></summary>
+
+<br>
+
+One command builds, signs, notarizes and publishes a release, then updates the Sparkle feed (`appcast.xml` on `main`):
+
+```bash
+NOTARY_PROFILE=<notarytool-profile> scripts/release.sh 0.2.1 --notes notes.md
+```
+
+- Run it from a clean `main` that is in sync with `origin/main`. It bumps the version in `project.yml`, adds one to the build number, archives a Universal build and exports it with Developer ID.
+- It notarizes and staples both the app and the DMG, signs the DMG with the EdDSA key, creates the `vX.Y.Z` tag and GitHub Release, and publishes the appcast last.
+- Add `--dry-run` to do everything except committing, tagging and publishing. Output goes to `build/release/`.
+- The signing identity (team `UBS9FUBNFR`, bundle ID `com.kenjia.swipesay`) must never change. Otherwise users lose their permissions and keychain access after updating. The script checks this.
+
+Prerequisites on the release machine:
+
+- A Developer ID Application certificate in the login keychain.
+- A notarytool profile: `xcrun notarytool store-credentials <name> --apple-id … --team-id UBS9FUBNFR`.
+- The Sparkle EdDSA private key in the keychain under the account `swipesay`. The public key is in `SwipeSay/Info.plist`. **Back it up**: if the key is lost, existing installs can no longer accept updates. After building once, export it with:
+
+  ```bash
+  build/release/dd/SourcePackages/artifacts/sparkle/Sparkle/bin/generate_keys --account swipesay -x swipesay-sparkle-key.txt
+  ```
+
+  Store the file somewhere safe, such as a password manager, and never commit it.
+
+Stored data is versioned. `VocabularyStore.swift` explains how to add a schema version and a migration stage when a model changes.
 
 </details>
 

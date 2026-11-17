@@ -182,6 +182,8 @@ struct GeneralSettingsPane: View {
                     Toggle("", isOn: $settings.showDockIcon).labelsHidden().toggleStyle(.switch)
                 }
             }
+
+            UpdateSettingsCard()
         }
         .onReceive(timer) { _ in
             axTrusted = SelectionCapture.isTrusted
@@ -318,5 +320,38 @@ struct LearningPane: View {
         panel.nameFieldStringValue = "SwipeSay-生词本.csv"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         try? VocabularyStore.shared.exportCSV().write(to: url, atomically: true, encoding: .utf8)
+    }
+}
+
+// MARK: - Updates
+
+struct UpdateSettingsCard: View {
+    @ObservedObject private var updater = Updater.shared
+
+    var body: some View {
+        SettingsCard(header: "更新") {
+            SettingsRow(title: "当前版本", subtitle: subtitle) {
+                Button("检查更新…") { updater.checkForUpdates() }
+                    .disabled(!updater.canCheckForUpdates)
+            }
+            Divider()
+            SettingsRow(title: "自动检查更新", subtitle: "每天检查一次") {
+                Toggle("", isOn: $updater.automaticallyChecks).labelsHidden().toggleStyle(.switch)
+                    .disabled(!Updater.isEnabled)
+            }
+            Divider()
+            SettingsRow(title: "自动下载并安装", subtitle: "下载完成后在退出时安装") {
+                Toggle("", isOn: $updater.automaticallyDownloads).labelsHidden().toggleStyle(.switch)
+                    .disabled(!Updater.isEnabled || !updater.automaticallyChecks)
+            }
+        }
+    }
+
+    private var subtitle: String {
+        guard Updater.isEnabled else { return "SwipeSay \(Updater.currentVersion) · Debug 版不检查更新" }
+        if let date = updater.lastCheckDate {
+            return "SwipeSay \(Updater.currentVersion) · 上次检查 \(date.formatted(.relative(presentation: .named)))"
+        }
+        return "SwipeSay \(Updater.currentVersion)"
     }
 }

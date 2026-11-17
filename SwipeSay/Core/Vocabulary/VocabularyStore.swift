@@ -60,6 +60,24 @@ final class VocabItem {
     }
 }
 
+// MARK: - Schema versions
+//
+// Every change to a stored model gets a new schema version and a migration stage, so updating the app never
+// leaves an existing vocabulary unreadable. To change `VocabItem`:
+//   1. Copy the current model into a frozen `VocabularySchemaV<n>` enum (as nested types).
+//   2. Edit the live model and add a `VocabularySchemaV<n+1>` that lists it.
+//   3. Append the new schema to `schemas` and a `.lightweight` or `.custom` stage to `stages`.
+
+enum VocabularySchemaV1: VersionedSchema {
+    static let versionIdentifier = Schema.Version(1, 0, 0)
+    static var models: [any PersistentModel.Type] { [VocabItem.self] }
+}
+
+enum VocabularyMigrationPlan: SchemaMigrationPlan {
+    static var schemas: [any VersionedSchema.Type] { [VocabularySchemaV1.self] }
+    static var stages: [MigrationStage] { [] }
+}
+
 /// Owns the SwiftData container and offers simple upsert helpers.
 @MainActor
 final class VocabularyStore: ObservableObject {
@@ -85,7 +103,9 @@ final class VocabularyStore: ObservableObject {
                 try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
                 configuration = ModelConfiguration(url: dir.appending(path: "Vocabulary.store"))
             }
-            container = try ModelContainer(for: VocabItem.self, configurations: configuration)
+            container = try ModelContainer(for: Schema(versionedSchema: VocabularySchemaV1.self),
+                                           migrationPlan: VocabularyMigrationPlan.self,
+                                           configurations: configuration)
         } catch {
             fatalError("SwipeSay: cannot open vocabulary store: \(error)")
         }
