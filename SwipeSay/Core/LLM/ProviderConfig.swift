@@ -112,8 +112,26 @@ final class ProviderStore: ObservableObject {
 
     private let storageKey = "providers.v1"
     private let activeKey = "providers.active"
+    /// Debug mock mode keeps providers in memory, so trying things out never rewrites the real settings.
+    private var inMemory = false
 
     private init() {
+        #if DEBUG
+        if MockClient.isEnabled {
+            inMemory = true
+            providers = [.chatGPT, .openAI, .anthropic, .gemini, .deepSeek].map { ProviderConfig(kind: $0) }
+            // `-SwipeSayDemoBaseURL <url>` adds and selects an OpenAI-compatible provider at that URL
+            // (for example a local fake server), so the settings flow can be exercised end to end.
+            if let url = UserDefaults.standard.string(forKey: "SwipeSayDemoBaseURL") {
+                var local = ProviderConfig(kind: .openAICompatible, name: "本地测试")
+                local.baseURL = url
+                local.model = "test-model"
+                providers.append(local)
+                activeID = local.id
+            }
+            return
+        }
+        #endif
         if let data = UserDefaults.standard.data(forKey: storageKey),
            let saved = try? JSONDecoder().decode([ProviderConfig].self, from: data), !saved.isEmpty {
             // Move configs still on an old built-in default to the current one; user-picked models stay.
@@ -154,6 +172,7 @@ final class ProviderStore: ObservableObject {
     }
 
     private func persist() {
+        guard !inMemory else { return }
         if let data = try? JSONEncoder().encode(providers) { UserDefaults.standard.set(data, forKey: storageKey) }
         UserDefaults.standard.set(activeID?.uuidString, forKey: activeKey)
     }
