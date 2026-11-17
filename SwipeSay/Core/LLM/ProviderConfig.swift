@@ -46,9 +46,11 @@ enum ProviderKind: String, Codable, CaseIterable, Identifiable {
 
     var defaultModel: String {
         switch self {
-        case .chatGPT: return "gpt-5.5"
-        case .openAI: return "gpt-5-mini"
-        case .anthropic: return "claude-opus-5-5"
+        // Translation is short, high-volume work: the efficient tier is fast and good enough.
+        // Luna is also the one model every ChatGPT plan (Free/Go included) can use in Codex.
+        case .chatGPT: return "gpt-6-luna"
+        case .openAI: return "gpt-6-luna"
+        case .anthropic: return "claude-haiku-5-5"
         case .gemini: return "gemini-2.5-flash"
         case .deepSeek: return "deepseek-chat"
         case .openAICompatible: return ""
@@ -58,9 +60,9 @@ enum ProviderKind: String, Codable, CaseIterable, Identifiable {
     /// Suggestions shown in the model picker before the live list is fetched.
     var suggestedModels: [String] {
         switch self {
-        case .chatGPT: return ["gpt-5.5", "gpt-5.4", "gpt-5.4-mini"]
-        case .openAI: return ["gpt-5-mini", "gpt-5", "gpt-4.1-mini"]
-        case .anthropic: return ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5", "claude-fable-5-2"]
+        case .chatGPT: return ["gpt-6-luna", "gpt-6.1-terra", "gpt-6.1-sol"]
+        case .openAI: return ["gpt-6-luna", "gpt-6.1-terra", "gpt-6.1-sol", "gpt-5.4-mini"]
+        case .anthropic: return ["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5", "claude-fable-5-2"]
         case .gemini: return ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.5-flash-lite"]
         case .deepSeek: return ["deepseek-chat", "deepseek-reasoner"]
         case .openAICompatible: return []
@@ -114,7 +116,15 @@ final class ProviderStore: ObservableObject {
     private init() {
         if let data = UserDefaults.standard.data(forKey: storageKey),
            let saved = try? JSONDecoder().decode([ProviderConfig].self, from: data), !saved.isEmpty {
-            providers = saved
+            // Move configs still on an old built-in default to the current one; user-picked models stay.
+            let legacyDefaults: [ProviderKind: Set<String>] = [
+                .chatGPT: ["gpt-5.5"], .openAI: ["gpt-5-mini"], .anthropic: ["claude-opus-5-5"],
+            ]
+            providers = saved.map { config in
+                var c = config
+                if legacyDefaults[c.kind]?.contains(c.model) == true { c.model = c.kind.defaultModel }
+                return c
+            }
         } else {
             providers = [.chatGPT, .openAI, .anthropic, .gemini, .deepSeek].map { ProviderConfig(kind: $0) }
         }
