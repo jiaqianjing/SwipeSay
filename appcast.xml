@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+  <channel>
+    <title>SwipeSay</title>
+    <link>https://github.com/jiaqianjing/SwipeSay</link>
+    <description><![CDATA[SwipeSay updates]]></description>
+    <language>zh-CN</language>
+    <item>
+      <title>SwipeSay 0.2.0</title>
+      <pubDate>Tue, 17 Nov 2026 11:48:32 GMT</pubDate>
+      <sparkle:version>2</sparkle:version>
+      <sparkle:shortVersionString>0.2.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[<div class="markdown-heading"><h2 class="heading-element">新功能</h2><a id="user-content-新功能" class="anchor" aria-label="Permalink: 新功能" href="#新功能"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<ul>
+<li>
+<strong>自动更新</strong>：SwipeSay 每天自动检查一次新版本。也可以在菜单栏点「检查更新…」，或在 设置 → 通用 → 更新 里手动检查，并开启「自动下载并安装」。后台发现新版本时不会突然弹窗，菜单里会出现「安装更新」。</li>
+<li>
+<strong>模型服务设置更顺手</strong>：
+<ul>
+<li>粘贴 API Key 后，「测试连接」立即可用，模型列表也会自动拉取，不用再先点「从服务获取模型列表」。</li>
+<li>测试连接会显示首字耗时和总耗时，方便比较不同服务和模型的速度。</li>
+<li>拉取模型失败时只在模型栏下方给一行提示，不再打断操作。</li>
+</ul>
+</li>
+</ul>
+<div class="markdown-heading"><h2 class="heading-element">改进</h2><a id="user-content-改进" class="anchor" aria-label="Permalink: 改进" href="#改进"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<ul>
+<li>API Key 不再每输入一个字符就写一次钥匙串。</li>
+<li>生词本数据库加入版本管理，以后升级时会自动迁移，不会丢词。</li>
+</ul>
+<div class="markdown-heading"><h2 class="heading-element">说明</h2><a id="user-content-说明" class="anchor" aria-label="Permalink: 说明" href="#说明"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<ul>
+<li>这是第一个支持自动更新的版本。从 0.1.0 升级需要手动下载安装一次，之后的版本都会自动推送。</li>
+<li>已授予的辅助功能、屏幕录制权限，以及已保存的 API Key，升级后都会保留。</li>
+</ul>
+]]></description>
+      <enclosure url="https://github.com/jiaqianjing/SwipeSay/releases/download/v0.2.0/SwipeSay-0.2.0.dmg" type="application/octet-stream" sparkle:edSignature="jEq8uPJMhe5+o7lyJA3qC/wB724rBN76vIbz+jYUOe8TuUaiMvgrkRLK11dnXah+vIQZFcdtiY+XcUVOz50GAQ==" length="2413987" />
+    </item>
+  </channel>
+</rss>
