@@ -179,11 +179,9 @@ struct ProviderDetailView: View {
                                         Divider()
                                         Toggle("显示全部模型", isOn: $showAllModels)
                                     }
-                                    if config.kind != .chatGPT {
-                                        Divider()
-                                        Button("从服务获取模型列表") { Task { await fetchModels() } }
-                                            .disabled(!hasCredentials)
-                                    }
+                                    Divider()
+                                    Button("从服务获取模型列表") { Task { await fetchModels() } }
+                                        .disabled(!hasCredentials)
                                     if (list.pinned + list.others).contains(where: { price(of: $0.id) != nil }) {
                                         Divider()
                                         Text("价格为每百万 token 输入 / 输出（美元），参考价，以官网为准")
@@ -195,7 +193,7 @@ struct ProviderDetailView: View {
                                 .fixedSize()
                             }
                             let list = modelList
-                            if let modelNote {
+                            if let modelNote = unlistedModelNote ?? modelNote {
                                 let hidden = modelNote.isError ? 0 : list.hidden
                                 let what = showAllModels ? "已弃用" : "非对话、旧版本或已弃用"
                                 Text(modelNote.text + (hidden > 0 ? " · 已隐藏 \(hidden) 个\(what)模型" : ""))
@@ -256,9 +254,9 @@ struct ProviderDetailView: View {
         .onDisappear { persistKey() }
         .onChange(of: config) { _, new in store.update(new) }
         // Typing pauses for 0.6 s → save the key once and refresh the model list. Changing the key or the
-        // Base URL again cancels the pending run, so a half-pasted key never gets used.
-        .task(id: "\(apiKey)|\(config.baseURL)") {
-            guard config.kind != .chatGPT else { return }
+        // Base URL again cancels the pending run, so a half-pasted key never gets used. Signing in to or out
+        // of ChatGPT changes `hasCredentials`, which reruns this too.
+        .task(id: "\(apiKey)|\(config.baseURL)|\(hasCredentials)") {
             try? await Task.sleep(for: .milliseconds(600))
             guard !Task.isCancelled else { return }
             persistKey()
@@ -272,6 +270,15 @@ struct ProviderDetailView: View {
         .confirmationDialog("删除「\(config.name)」？", isPresented: $confirmDelete) {
             Button("删除", role: .destructive) { store.remove(config.id) }
         }
+    }
+
+    /// ChatGPT's catalog is per account, so a typed model missing from the fetched list will likely be rejected.
+    private var unlistedModelNote: ModelNote? {
+        let model = config.model.trimmingCharacters(in: .whitespaces)
+        guard config.kind == .chatGPT, !fetchedModels.isEmpty, !model.isEmpty, !fetchedModels.contains(where: { $0.id == model }) else {
+            return nil
+        }
+        return ModelNote(text: "「\(model)」不在此账号的可用模型列表中，可能无法使用", isError: true)
     }
 
     private var baseURLHint: String? {
@@ -321,7 +328,9 @@ struct ProviderDetailView: View {
                                   isError: false)
         } catch {
             guard !Task.isCancelled else { return }
-            modelNote = ModelNote(text: "无法获取模型列表：\(error.localizedDescription)", isError: true)
+            // ChatGPT's catalog endpoint isn't a public API; the menu falls back to the built-in suggestions.
+            let fallback = config.kind == .chatGPT && fetchedModels.isEmpty ? "，已显示内置列表" : ""
+            modelNote = ModelNote(text: "无法获取模型列表\(fallback)：\(error.localizedDescription)", isError: true)
         }
     }
 
