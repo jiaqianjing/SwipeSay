@@ -17,7 +17,17 @@ struct MockClient: LLMClient {
     func stream(_ request: LLMRequest) -> AsyncThrowingStream<String, Error> {
         makeUsageStream(config: Self.config, request: request) { continuation, meter in
             let reply: String
-            if request.system.contains("learner's dictionary") {
+            if request.system.contains("follow-up question") {
+                let question = request.user.components(separatedBy: "<question>\n").last?
+                    .components(separatedBy: "\n</question>").first ?? ""
+                let turn = request.user.components(separatedBy: "<q>").count
+                reply = """
+                （第 \(turn) 轮 · Mock）关于「\(question)」：
+                - 可以换成 enter，但语气会变：set foot in 强调「踏进去的那一刻」，常带“第一次 / 终于”的意味。
+                - enter 更中性，只是陈述进入这个动作。
+                例：No sooner had she entered the house than she felt it. 她一进屋就感觉到了。
+                """
+            } else if request.system.contains("learner's dictionary") {
                 reply = #"{"term":"ubiquitous","lemma":"ubiquitous","phonetic":"/juːˈbɪkwɪtəs/","context_meaning":"无处不在的","senses":[{"pos":"adj.","meaning":"普遍存在的；无所不在的"}],"example":{"source":"Smartphones have become ubiquitous in modern life.","target":"智能手机在现代生活中已无处不在。"},"note":"常与 become 连用；名词形式 ubiquity。"}"#
             } else if request.system.contains("analysis_worthy") {
                 reply = #"{"items":[{"text":"no sooner … than","kind":"pattern","phonetic":"","meaning":"一……就……","note":"no sooner 置于句首时主谓倒装"},{"text":"set foot in","kind":"phrase","phonetic":"","meaning":"踏入；进入","note":""},{"text":"inexplicable","kind":"word","phonetic":"/ˌɪnɪkˈsplɪkəbl/","meaning":"无法解释的","note":"比 strange 更正式"}],"analysis_worthy":true,"analysis_hint":"否定副词前置倒装"}"#

@@ -85,6 +85,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             appName: "Safari", bundleID: "com.apple.Safari", windowTitle: "The House on the Hill",
             origin: .selection, anchor: NSPoint(x: screen.midX - 200, y: screen.maxY - 120))
         PopupController.shared.show(captured)
+        // `-SwipeSayDemoFollowUp <question>` asks a follow-up once the translation is done.
+        if let question = UserDefaults.standard.string(forKey: "SwipeSayDemoFollowUp") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                guard let model = PopupController.shared.debugModel else { return }
+                model.followUpDraft = question
+                model.sendFollowUp()
+            }
+        }
         guard UserDefaults.standard.bool(forKey: "SwipeSayDemoExpand") else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
             PopupController.shared.debugModel?.toggleCapsule()

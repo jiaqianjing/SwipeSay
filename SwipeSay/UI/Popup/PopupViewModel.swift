@@ -10,6 +10,14 @@ final class PopupViewModel: ObservableObject {
         var isBusy: Bool { self == .loading || self == .streaming }
     }
 
+    /// One follow-up question and its (streamed) answer. Lives only as long as the popup.
+    struct FollowUpTurn: Identifiable, Equatable {
+        let id = UUID()
+        var question: String
+        var answer = ""
+        var phase: Phase = .loading
+    }
+
     @Published var captured: CapturedText
     @Published var sourceText: String
     @Published var isInputMode: Bool
@@ -28,6 +36,9 @@ final class PopupViewModel: ObservableObject {
     @Published var analysisPhase: Phase = .idle
     @Published var analysis: SentenceAnalysis?
 
+    @Published var followUpDraft = ""
+    @Published var followUps: [FollowUpTurn] = []
+
     @Published var pinned = false
     @Published var sourceExpanded = false
     @Published var providerLabel = ""
@@ -39,6 +50,9 @@ final class PopupViewModel: ObservableObject {
     private var translateTask: Task<Void, Never>?
     private var keyItemsTask: Task<Void, Never>?
     private var analysisTask: Task<Void, Never>?
+    private var followUpTask: Task<Void, Never>?
+    /// How many earlier exchanges are sent back to the model with each follow-up.
+    private let followUpHistoryLimit = 6
     private let settings = AppSettings.shared
 
     init(captured: CapturedText, inputMode: Bool = false) {
@@ -65,6 +79,16 @@ final class PopupViewModel: ObservableObject {
     }
 
     var currentTarget: AppLanguage { targetOverride ?? plan.direction.target }
+
+    /// Follow-ups are offered once there is a finished result to talk about.
+    var canFollowUp: Bool { phase == .done }
+    var isFollowUpBusy: Bool { followUps.last?.phase.isBusy == true }
+    var canSendFollowUp: Bool {
+        canFollowUp && !isFollowUpBusy && !followUpDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// An outside click must not throw away a typed question or an ongoing conversation.
+    var keepsOpen: Bool { pinned || !followUpDraft.isEmpty || !followUps.isEmpty }
 
     // MARK: Actions
 
@@ -105,6 +129,8 @@ final class PopupViewModel: ObservableObject {
         notConfigured = false
         cachedAt = nil
         self.bypassCache = bypassCache
+        // The conversation was about the previous result; the draft is kept.
+        followUps = []
         phase = .loading
 
         let captured = self.captured
@@ -257,10 +283,73 @@ final class PopupViewModel: ObservableObject {
         }
     }
 
+    // MARK: Follow-up questions
+
+    func sendFollowUp() {
+        guard canSendFollowUp else { return }
+        let question = followUpDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        followUpDraft = ""
+        let turn = FollowUpTurn(question: question)
+        followUps.append(turn)
+        runFollowUp(turn.id)
+    }
+
+    func retryFollowUp(_ id: UUID) {
+        guard canFollowUp, !isFollowUpBusy else { return }
+        runFollowUp(id)
+    }
+
+    private func runFollowUp(_ id: UUID) {
+        guard let index = followUps.firstIndex(where: { $0.id == id }) else { return }
+        followUpTask?.cancel()
+        followUps[index].answer = ""
+        followUps[index].phase = .loading
+
+        let history = followUps[..<index]
+            .filter { $0.phase == .done }
+            .suffix(followUpHistoryLimit)
+            .map { Prompts.FollowUpExchange(question: $0.question, answer: $0.answer) }
+        let material = Prompts.FollowUpMaterial(
+            captured: captured, useContext: settings.useContext, direction: plan.direction,
+            translation: translation, word: word,
+            keyItems: capsuleExpanded ? keyItems?.items : nil, analysis: analysis)
+        let request = Prompts.followUp(material, history: Array(history), question: followUps[index].question,
+                                       native: settings.targetLanguage, level: settings.learnerLevel)
+        followUpTask = Task { [weak self] in
+            do {
+                let (client, _) = try TranslationService.activeClient()
+                // The request is tagged `.followUp`, so the client layer records it as 追问 on the usage page.
+                // Follow-up answers are not cached: they depend on the whole conversation.
+                for try await delta in client.stream(request) {
+                    guard let self else { return }
+                    self.updateFollowUp(id) { turn in
+                        if turn.phase == .loading { turn.phase = .streaming }
+                        turn.answer += delta
+                    }
+                }
+                try Task.checkCancellation()
+                self?.updateFollowUp(id) { turn in
+                    turn.answer = turn.answer.trimmingCharacters(in: .whitespacesAndNewlines)
+                    turn.phase = .done
+                }
+            } catch is CancellationError {
+            } catch {
+                if (error as? URLError)?.code == .cancelled { return }
+                self?.updateFollowUp(id) { $0.phase = .failed(error.localizedDescription) }
+            }
+        }
+    }
+
+    private func updateFollowUp(_ id: UUID, _ change: (inout FollowUpTurn) -> Void) {
+        guard let index = followUps.firstIndex(where: { $0.id == id }) else { return }
+        change(&followUps[index])
+    }
+
     func cancelAll() {
         translateTask?.cancel()
         keyItemsTask?.cancel()
         analysisTask?.cancel()
+        followUpTask?.cancel()
     }
 
     // MARK: Vocabulary

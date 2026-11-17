@@ -11,6 +11,11 @@ private struct TotalHeightKey: PreferenceKey {
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
+private struct FollowUpBarHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
 struct PopupRootView: View {
     @ObservedObject var model: PopupViewModel
     var maxHeight: CGFloat
@@ -18,20 +23,37 @@ struct PopupRootView: View {
 
     @EnvironmentObject private var vocab: VocabularyStore
     @State private var contentHeight: CGFloat = 40
+    @State private var followUpBarHeight: CGFloat = 0
     @State private var showContext = false
     @FocusState private var inputFocused: Bool
+    @FocusState private var followUpFocused: Bool
+
+    /// Room left for the scrolling content once header, footer and the follow-up box are laid out.
+    private var scrollLimit: CGFloat { maxHeight - 90 - (model.canFollowUp ? followUpBarHeight : 0) }
 
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 0) {
                 header
-                ScrollView(.vertical, showsIndicators: contentHeight > maxHeight - 90) {
-                    content
+                ScrollViewReader { proxy in
+                    ScrollView(.vertical, showsIndicators: contentHeight > scrollLimit) {
+                        content
+                            .background(GeometryReader { g in
+                                Color.clear.preference(key: ContentHeightKey.self, value: g.size.height)
+                            })
+                    }
+                    .frame(height: min(contentHeight, scrollLimit))
+                    .onChange(of: model.followUps.count) { scrollToConversationEnd(proxy) }
+                    .onChange(of: model.followUps.last?.answer) {
+                        if model.isFollowUpBusy { scrollToConversationEnd(proxy) }
+                    }
+                }
+                if model.canFollowUp {
+                    followUpBar
                         .background(GeometryReader { g in
-                            Color.clear.preference(key: ContentHeightKey.self, value: g.size.height)
+                            Color.clear.preference(key: FollowUpBarHeightKey.self, value: g.size.height)
                         })
                 }
-                .frame(height: min(contentHeight, maxHeight - 90))
                 footer
             }
             .frame(width: Theme.popupWidth)
@@ -48,6 +70,7 @@ struct PopupRootView: View {
         }
         .frame(maxHeight: .infinity, alignment: .top)
         .onPreferenceChange(ContentHeightKey.self) { h in contentHeight = h }
+        .onPreferenceChange(FollowUpBarHeightKey.self) { h in followUpBarHeight = h }
         .onPreferenceChange(TotalHeightKey.self) { h in onHeight(h) }
         .onAppear { if model.isInputMode { inputFocused = true } }
     }
@@ -137,11 +160,53 @@ struct PopupRootView: View {
             if model.canShowCapsule {
                 CapsuleSection(model: model)
             }
+            if !model.followUps.isEmpty {
+                FollowUpConversation(model: model)
+                    .id(Self.conversationEndID)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.top, 4)
-        .padding(.bottom, 14)
+        .padding(.bottom, model.canFollowUp ? 6 : 14)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: Follow-up
+
+    private static let conversationEndID = "conversation-end"
+
+    private func scrollToConversationEnd(_ proxy: ScrollViewProxy) {
+        // Wait one runloop so the new content height has been measured.
+        DispatchQueue.main.async { proxy.scrollTo(Self.conversationEndID, anchor: .bottom) }
+    }
+
+    /// Return sends; ⇧↩ inserts a newline (handled by `PopupController`'s key monitor).
+    private var followUpBar: some View {
+        HStack(alignment: .bottom, spacing: 6) {
+            TextField("追问这段内容…", text: $model.followUpDraft, axis: .vertical)
+                .textFieldStyle(.plain)
+                .font(.system(size: 13))
+                .lineLimit(1...5)
+                .focused($followUpFocused)
+                .onSubmit { model.sendFollowUp() }
+            Button { model.sendFollowUp() } label: {
+                Image(systemName: model.isFollowUpBusy ? "ellipsis.circle.fill" : "arrow.up.circle.fill")
+                    .font(.system(size: 17))
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(model.canSendFollowUp ? Theme.accent : Color.secondary.opacity(0.45))
+            .disabled(!model.canSendFollowUp)
+            .help(model.isFollowUpBusy ? "正在回答…" : "发送 (↩)，⇧↩ 换行")
+        }
+        .padding(.leading, 10).padding(.trailing, 6).padding(.vertical, 6)
+        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(followUpFocused ? Theme.accent.opacity(0.45) : Color.primary.opacity(0.06), lineWidth: 0.5)
+        )
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
+        .padding(.top, 2)
     }
 
     private var inputField: some View {
@@ -265,6 +330,52 @@ struct PopupRootView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 7)
         .background(Color.primary.opacity(0.035))
+    }
+}
+
+// MARK: - Follow-up conversation
+
+struct FollowUpConversation: View {
+    @ObservedObject var model: PopupViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Rectangle().fill(Color.primary.opacity(0.08)).frame(height: 0.5)
+                Text("追问").font(.system(size: 10, weight: .semibold)).foregroundStyle(.tertiary)
+                Rectangle().fill(Color.primary.opacity(0.08)).frame(height: 0.5)
+            }
+            ForEach(model.followUps) { turn in
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 0) {
+                        Spacer(minLength: 48)
+                        Text(turn.question)
+                            .font(.system(size: 12.5))
+                            .textSelection(.enabled)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.horizontal, 10).padding(.vertical, 6)
+                            .background(Theme.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    }
+                    answer(turn)
+                }
+            }
+        }
+        .padding(.top, 2)
+    }
+
+    @ViewBuilder private func answer(_ turn: PopupViewModel.FollowUpTurn) -> some View {
+        switch turn.phase {
+        case .idle, .loading:
+            ShimmerLines(lines: 2).padding(.vertical, 2)
+        case .failed(let message):
+            ErrorBanner(message: message, showSettings: false) { model.retryFollowUp(turn.id) }
+        case .streaming, .done:
+            (Text(turn.answer) + Text(turn.phase == .streaming ? " ▍" : "").foregroundColor(Theme.accent))
+                .font(.system(size: 13))
+                .lineSpacing(3)
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 

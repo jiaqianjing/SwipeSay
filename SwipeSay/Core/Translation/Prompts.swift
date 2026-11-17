@@ -135,4 +135,97 @@ enum Prompts {
         if let hint, !hint.isEmpty { user += "\n<focus>\(hint)</focus>" }
         return LLMRequest(system: system, user: user, expectsJSON: true, maxTokens: 3000, kind: .analysis)
     }
+
+    // MARK: Follow-up questions in the popup (streamed plain text)
+
+    /// Everything the popup currently shows about the selection, handed to the model with each follow-up.
+    struct FollowUpMaterial {
+        var captured: CapturedText
+        var useContext: Bool
+        var direction: Direction
+        var translation: String
+        var word: WordResult?
+        /// Only the key expressions the learner has expanded.
+        var keyItems: [KeyItem]?
+        var analysis: SentenceAnalysis?
+    }
+
+    struct FollowUpExchange {
+        var question: String
+        var answer: String
+    }
+
+    /// `LLMRequest` is single-turn, so earlier exchanges are packed into the user message.
+    static func followUp(_ material: FollowUpMaterial, history: [FollowUpExchange], question: String,
+                         native: AppLanguage, level: LearnerLevel) -> LLMRequest {
+        let system = """
+        You are SwipeSay's language coach, living inside a translation popup. The learner is \(level.promptDescription) \
+        whose native language is \(native.promptName).
+        The learner just looked up the text in <selected>; what the popup showed them is in <translation>, <word_card>, \
+        <key_expressions> and <analysis>. Earlier follow-up questions and your answers are in <conversation>. \
+        Now answer the new follow-up question in <question>.
+
+        Rules:
+        - Answer in \(native.promptName) unless the learner explicitly asks for another language. Keep quoted words, \
+        phrases and example sentences in their original language.
+        - Ground every answer in the selected text and its context; never ask the learner to paste it again. \
+        "this", "here", "it" (这里 / 这个 / 它) refer to the selected text unless the conversation says otherwise.
+        - Be concise and learning-oriented: get straight to the point, usually 2–6 short lines. Explain nuance, register \
+        or grammar when it helps; give examples when asked or when they clearly help, each with a short translation.
+        - Pitch explanations at the learner's level. If the question has nothing to do with the text, still answer briefly.
+        - Plain text only: no Markdown headings, bold, tables or code fences. Short lines starting with "- " are fine.
+        """
+        var parts: [String] = []
+        let context = contextBlock(material.captured, useContext: material.useContext)
+        if !context.isEmpty { parts.append(context) }
+        parts.append("<selected>\n\(material.captured.text)\n</selected>")
+
+        if let word = material.word {
+            var lines: [String] = []
+            if let term = word.term, !term.isEmpty { lines.append("term: \(term)") }
+            if let lemma = word.lemma, !lemma.isEmpty, lemma != word.term { lines.append("lemma: \(lemma)") }
+            if let p = word.phonetic, !p.isEmpty { lines.append("phonetic: \(p)") }
+            if let m = word.contextMeaning, !m.isEmpty { lines.append("meaning here: \(m)") }
+            for sense in word.senses ?? [] {
+                if let m = sense.meaning, !m.isEmpty { lines.append("sense: \(sense.pos ?? "") \(m)") }
+            }
+            if let src = word.example?.source, !src.isEmpty {
+                lines.append("example: \(src)" + (word.example?.target.map { " — \($0)" } ?? ""))
+            }
+            if let note = word.note, !note.isEmpty { lines.append("note: \(note)") }
+            parts.append("<word_card>\n\(lines.joined(separator: "\n"))\n</word_card>")
+        } else if !material.translation.isEmpty {
+            let target = material.direction.target.promptName
+            parts.append("<translation lang=\"\(target)\">\n\(material.translation)\n</translation>")
+        }
+
+        if let items = material.keyItems, !items.isEmpty {
+            let lines = items.map { item -> String in
+                var line = "- \(item.text)"
+                if let m = item.meaning, !m.isEmpty { line += ": \(m)" }
+                if let n = item.note, !n.isEmpty { line += " (\(n))" }
+                return line
+            }
+            parts.append("<key_expressions>\n\(lines.joined(separator: "\n"))\n</key_expressions>")
+        }
+
+        if let a = material.analysis {
+            var lines: [String] = []
+            if let s = a.skeleton, !s.isEmpty { lines.append("skeleton: \(s)") }
+            for chunk in a.chunks ?? [] {
+                lines.append("- [\(chunk.role ?? "")] \(chunk.text ?? ""): \(chunk.explain ?? "")")
+            }
+            for insight in a.insights ?? [] { lines.append("insight: \(insight)") }
+            if let u = a.usage, !u.isEmpty { lines.append("usage: \(u)") }
+            if let p = a.paraphrase, !p.isEmpty { lines.append("paraphrase: \(p)") }
+            if !lines.isEmpty { parts.append("<analysis>\n\(lines.joined(separator: "\n"))\n</analysis>") }
+        }
+
+        if !history.isEmpty {
+            let turns = history.map { "<q>\($0.question)</q>\n<a>\($0.answer)</a>" }
+            parts.append("<conversation>\n\(turns.joined(separator: "\n"))\n</conversation>")
+        }
+        parts.append("<question>\n\(question)\n</question>")
+        return LLMRequest(system: system, user: parts.joined(separator: "\n\n"), maxTokens: 1500, kind: .followUp)
+    }
 }

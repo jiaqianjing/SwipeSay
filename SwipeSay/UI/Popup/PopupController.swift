@@ -6,7 +6,7 @@ final class PopupPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 
     override func cancelOperation(_ sender: Any?) {
-        PopupController.shared.close()
+        PopupController.shared.handleEscape()
     }
 }
 
@@ -112,21 +112,41 @@ final class PopupController {
 
     // MARK: Dismissal
 
+    /// Esc first clears a typed follow-up question; a second Esc closes the popup.
+    func handleEscape() {
+        if let model, !model.followUpDraft.isEmpty {
+            model.followUpDraft = ""
+            return
+        }
+        close()
+    }
+
     private func installMonitors() {
         removeMonitors()
         if let m = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] _ in
             MainActor.assumeIsolated {
-                guard let self, let model = self.model, !model.pinned else { return }
+                guard let self, let model = self.model, !model.keepsOpen else { return }
                 if let panel = self.panel, panel.frame.contains(NSEvent.mouseLocation) { return }
                 self.close()
             }
         }) { monitors.append(m) }
         if let m = NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: { [weak self] event in
-            if event.keyCode == 53, event.window === self?.panel { // Esc
-                self?.close()
+            guard let self, event.window === self.panel else { return event }
+            let editor = self.panel?.firstResponder as? NSTextView
+            // Keys typed during IME composition (e.g. pinyin) belong to the input method.
+            if editor?.hasMarkedText() == true { return event }
+            switch event.keyCode {
+            case 53: // Esc
+                self.handleEscape()
                 return nil
+            case 36, 76: // Return / keypad Enter
+                // ⇧↩ inserts a newline instead of submitting, like ⌥↩ does.
+                guard event.modifierFlags.contains(.shift), let editor else { return event }
+                editor.insertNewlineIgnoringFieldEditor(nil)
+                return nil
+            default:
+                return event
             }
-            return event
         }) { monitors.append(m) }
     }
 
