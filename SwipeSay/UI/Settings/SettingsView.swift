@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 import Combine
+import AVFoundation
 
 struct SettingsView: View {
     @EnvironmentObject private var nav: SettingsNavigation
@@ -310,6 +311,7 @@ struct LearningPane: View {
                     .controlSize(.small)
                 }
             }
+            SpeechVoicesCard()
         }
     }
 
@@ -320,6 +322,75 @@ struct LearningPane: View {
         panel.nameFieldStringValue = "SwipeSay-生词本.csv"
         guard panel.runModal() == .OK, let url = panel.url else { return }
         try? VocabularyStore.shared.exportCSV().write(to: url, atomically: true, encoding: .utf8)
+    }
+}
+
+// MARK: - Speech voices
+
+struct SpeechVoicesCard: View {
+    @State private var showOthers = false
+    /// Bumped when the system's installed voices change, so the lists are rebuilt.
+    @State private var voicesVersion = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SettingsCard(header: "朗读声音") {
+                SpeechVoiceRow(language: .english, title: "英语").id("en-\(voicesVersion)")
+                Divider()
+                DisclosureGroup("其他语言", isExpanded: $showOthers) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        ForEach(AppLanguage.allCases.filter { $0 != .english }) { lang in
+                            Divider()
+                            SpeechVoiceRow(language: lang, title: lang.displayName).id("\(lang.rawValue)-\(voicesVersion)")
+                        }
+                    }
+                }
+                .font(.system(size: 13))
+                .padding(.vertical, 9)
+            }
+            Text("想要更自然的读音：在 系统设置 → 辅助功能 → 朗读内容 → 系统声音 → 管理声音… 中下载标有「增强」或「高级」的声音，下载后会出现在这里，「自动」会优先使用它们。")
+                .font(.system(size: 11)).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.leading, 4)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: AVSpeechSynthesizer.availableVoicesDidChangeNotification)) { _ in
+            voicesVersion += 1
+        }
+    }
+}
+
+private struct SpeechVoiceRow: View {
+    var language: AppLanguage
+    var title: String
+    @EnvironmentObject private var settings: AppSettings
+
+    var body: some View {
+        let voices = Speaker.installedVoices(for: language)
+        let stored = settings.speechVoices[language.rawValue]
+        let storedInstalled = stored.map { id in voices.contains { $0.identifier == id } } ?? false
+        SettingsRow(title: title, subtitle: subtitle(stored: stored, installed: storedInstalled)) {
+            HStack(spacing: 8) {
+                Picker("", selection: Binding(
+                    get: { storedInstalled ? stored ?? "" : "" },
+                    set: { settings.speechVoices[language.rawValue] = $0.isEmpty ? nil : $0 }
+                )) {
+                    Text("自动（最佳可用）").tag("")
+                    if !voices.isEmpty { Divider() }
+                    ForEach(voices, id: \.identifier) { Text(Speaker.displayName($0)).tag($0.identifier) }
+                }
+                .labelsHidden().frame(width: 200)
+                Button("试听") { Speaker.preview(language) }
+                    .controlSize(.small)
+                    .fixedSize()
+            }
+        }
+    }
+
+    private func subtitle(stored: String?, installed: Bool) -> String? {
+        if installed { return nil }
+        guard let best = Speaker.bestVoice(for: language) else { return "未安装可用的声音" }
+        let name = Speaker.displayName(best)
+        return stored == nil ? "当前使用：\(name)" : "所选声音已被移除，改用：\(name)"
     }
 }
 

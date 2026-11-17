@@ -102,6 +102,7 @@ final class AppSettings: ObservableObject {
         static let screenshotShortcut = "shortcut.screenshot"
         static let inputShortcut = "shortcut.input"
         static let didOnboard = "didOnboard"
+        static let speechVoices = "speechVoices"
     }
 
     @Published var targetLanguage: AppLanguage { didSet { defaults.set(targetLanguage.rawValue, forKey: Key.target) } }
@@ -122,6 +123,8 @@ final class AppSettings: ObservableObject {
     @Published var screenshotShortcut: Shortcut { didSet { save(screenshotShortcut, Key.screenshotShortcut) } }
     @Published var inputShortcut: Shortcut { didSet { save(inputShortcut, Key.inputShortcut) } }
     @Published var didOnboard: Bool { didSet { defaults.set(didOnboard, forKey: Key.didOnboard) } }
+    /// Chosen speech voice identifier per `AppLanguage.rawValue`; a missing entry means "best available".
+    @Published var speechVoices: [String: String] { didSet { defaults.set(speechVoices, forKey: Key.speechVoices) } }
 
     @Published var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled {
         didSet {
@@ -151,6 +154,7 @@ final class AppSettings: ObservableObject {
         showDockIcon = defaults.bool(forKey: Key.dockIcon)
         learnerLevel = LearnerLevel(rawValue: defaults.string(forKey: Key.level) ?? "") ?? .upperIntermediate
         didOnboard = defaults.bool(forKey: Key.didOnboard)
+        speechVoices = defaults.dictionary(forKey: Key.speechVoices) as? [String: String] ?? [:]
         selectionShortcut = Self.load(Key.selectionShortcut) ?? .defaultSelection
         screenshotShortcut = Self.load(Key.screenshotShortcut) ?? .defaultScreenshot
         inputShortcut = Self.load(Key.inputShortcut) ?? .defaultInput
