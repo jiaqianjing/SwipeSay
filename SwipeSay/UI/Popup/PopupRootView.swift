@@ -394,11 +394,15 @@ struct WordCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(word.term ?? model.sourceText)
+                let term = word.term ?? model.sourceText
+                let phonetic = word.phonetic ?? ""
+                // A stress-marked spelling (Russian "молоко́") replaces the headword rather than repeating it.
+                let marked = Phonetic.isMarkedSpelling(phonetic, of: term)
+                Text(marked ? phonetic : term)
                     .font(.system(size: 21, weight: .semibold))
                     .textSelection(.enabled)
-                if let p = word.phonetic, !p.isEmpty {
-                    Text(p).font(.system(size: 13)).foregroundStyle(.secondary)
+                if !marked, !phonetic.isEmpty {
+                    Text(phonetic).font(.system(size: 13)).foregroundStyle(.secondary)
                 }
                 Spacer()
                 if !model.plan.sourceIsNative {
@@ -406,7 +410,9 @@ struct WordCardView: View {
                 }
             }
             if let lemma = word.lemma, !lemma.isEmpty, lemma.lowercased() != (word.term ?? "").lowercased() {
-                Text("原形：\(lemma)").font(.system(size: 11)).foregroundStyle(.secondary)
+                let lemmaPhonetic = word.lemmaPhonetic ?? ""
+                Text("原形：\(Phonetic.isMarkedSpelling(lemmaPhonetic, of: lemma) ? lemmaPhonetic : lemma)")
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
             }
             if let meaning = word.contextMeaning, !meaning.isEmpty {
                 HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -421,11 +427,15 @@ struct WordCardView: View {
                             Text(sense.pos ?? "")
                                 .font(.system(size: 11.5, weight: .semibold).italic())
                                 .foregroundStyle(.secondary)
-                                .frame(width: 38, alignment: .leading)
+                                .fixedSize()
+                                .frame(minWidth: 38, alignment: .leading)
                             Text(sense.meaning ?? "").font(.system(size: 13)).textSelection(.enabled)
                         }
                     }
                 }
+            }
+            if let forms = word.forms, !forms.isEmpty {
+                WordFormsView(model: model, forms: forms)
             }
             if let ex = word.example, let src = ex.source, !src.isEmpty {
                 HStack(alignment: .top, spacing: 8) {
@@ -442,6 +452,86 @@ struct WordCardView: View {
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+}
+
+/// Declension / conjugation: a one-line summary, with the full tables behind a toggle.
+struct WordFormsView: View {
+    @ObservedObject var model: PopupViewModel
+    var forms: WordResult.Forms
+
+    var body: some View {
+        let tables = forms.visibleTables
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                TagView(text: "词形")
+                if let summary = forms.summary, !summary.isEmpty {
+                    Text(summary).font(.system(size: 12.5)).textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 0)
+                if !tables.isEmpty {
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) { model.formsExpanded.toggle() }
+                    } label: {
+                        HStack(spacing: 3) {
+                            Text(model.formsExpanded ? "收起" : "变化表")
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 8, weight: .bold))
+                                .rotationEffect(.degrees(model.formsExpanded ? 180 : 0))
+                        }
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(Theme.accent)
+                    }
+                    .buttonStyle(.plain)
+                    .fixedSize()
+                }
+            }
+            if model.formsExpanded {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(tables, id: \.self) { FormsTableView(table: $0) }
+                }
+                .transition(.opacity)
+            }
+        }
+    }
+}
+
+struct FormsTableView: View {
+    var table: WordResult.Forms.Table
+
+    var body: some View {
+        let columns = table.columns ?? []
+        let rows = table.rows ?? []
+        let width = max(columns.count, rows.map { ($0.cells ?? []).count }.max() ?? 0)
+        VStack(alignment: .leading, spacing: 4) {
+            if let title = table.title, !title.isEmpty {
+                Text(title).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary)
+            }
+            Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 3) {
+                if !columns.isEmpty {
+                    GridRow {
+                        Text("")
+                        ForEach(0..<width, id: \.self) { i in
+                            Text(i < columns.count ? columns[i] : "")
+                                .font(.system(size: 10.5, weight: .semibold)).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    GridRow {
+                        Text(row.label ?? "").font(.system(size: 11)).foregroundStyle(.secondary)
+                        ForEach(0..<width, id: \.self) { i in
+                            let cells = row.cells ?? []
+                            Text(i < cells.count ? cells[i] : "").font(.system(size: 12.5))
+                        }
+                    }
+                }
+            }
+            .textSelection(.enabled)
+            .padding(.horizontal, 10).padding(.vertical, 7)
+            .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 7))
         }
     }
 }

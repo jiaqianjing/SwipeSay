@@ -15,6 +15,9 @@ enum TranslationService {
         let letters = text.unicodeScalars.filter { CharacterSet.letters.contains($0) }
         if !letters.isEmpty, letters.allSatisfy({ $0.isASCII }) { return .english }
         let recognizer = NLLanguageRecognizer()
+        // Only choose among languages the app supports. Unconstrained, single Russian words are often taken for
+        // Bulgarian or Ukrainian (e.g. "книга", "молоко"), which then maps to no language at all.
+        recognizer.languageConstraints = AppLanguage.allCases.flatMap(\.nlLanguages)
         recognizer.processString(text)
         guard let lang = recognizer.dominantLanguage else { return nil }
         return AppLanguage.allCases.first { $0.nlLanguages.contains(lang) }

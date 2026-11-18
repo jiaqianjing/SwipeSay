@@ -4,7 +4,7 @@ import Foundation
 enum Prompts {
     /// Part of every translation-cache key. Bump it whenever a prompt changes in a way that should make
     /// previously cached results stale; old entries then simply stop matching and age out.
-    static let version = 1
+    static let version = 2
 
     struct Direction {
         var source: AppLanguage?
@@ -50,28 +50,115 @@ enum Prompts {
     // MARK: Word lookup (JSON)
 
     static func word(_ captured: CapturedText, direction: Direction, useContext: Bool) -> LLMRequest {
-        let system = """
+        let source = direction.source
+        let native = direction.native.promptName
+        let target = direction.target.promptName
+        let formsRule = wordFormsRule(source: source, native: direction.native)
+        var keys = """
+          "term": "the selected word/phrase as written",
+          "lemma": "dictionary form, e.g. 'run' for 'ran' (same as term if already base form)",
+          "phonetic": "\(wordPhoneticRule(source: source))",
+          "lemma_phonetic": "the same notation for the lemma; empty string if lemma equals term",
+          "context_meaning": "the precise meaning IN THIS CONTEXT, in \(target), concise (<= 25 chars if Chinese)",
+          "senses": [{"pos": "\(wordPosRule(source: source, native: direction.native))", "meaning": "common meanings in \(target)"}],
+          "example": {"source": "the sentence from the context containing the term (or a short natural example if no context)", \
+        "target": "its translation in \(target)"},
+          "note": "one short, genuinely useful tip (collocation, confusable word, register) in \(native); empty string if nothing valuable"
+        """
+        if formsRule != nil {
+            keys += """
+            ,
+              "forms": {"summary": "one line in \(native)", \
+            "tables": [{"title": "...", "columns": ["..."], "rows": [{"label": "...", "cells": ["..."]}]}]}
+            """
+        }
+        var system = """
         You are SwipeSay, a bilingual learner's dictionary that understands context.
-        The user selected a word or short phrase. Explain it for a \(direction.native.promptName) speaker, \
-        translating into \(direction.target.promptName).
+        The user selected a word or short phrase. Explain it for a \(native) speaker, translating into \(target).
 
         Return ONLY a JSON object with these keys:
         {
-          "term": "the selected word/phrase as written",
-          "lemma": "dictionary form, e.g. 'run' for 'ran' (same as term if already base form)",
-          "phonetic": "IPA for English like /rʌn/, pinyin for Chinese, empty string if not applicable",
-          "context_meaning": "the precise meaning IN THIS CONTEXT, in \(direction.target.promptName), concise (<= 25 chars if Chinese)",
-          "senses": [{"pos": "n. / v. / adj. …", "meaning": "common meanings in \(direction.target.promptName)"}],
-          "example": {"source": "the sentence from the context containing the term (or a short natural example if no context)", \
-        "target": "its translation in \(direction.target.promptName)"},
-          "note": "one short, genuinely useful tip (collocation, confusable word, register) in \(direction.native.promptName); empty string if nothing valuable"
+        \(keys)
         }
         Rules: at most 4 senses, most common first; the context meaning must reflect the surrounding text, not just the most common sense.
         """
+        if let formsRule { system += "\n\n" + formsRule }
         var user = contextBlock(captured, useContext: useContext)
         if !user.isEmpty { user += "\n\n" }
         user += "<selected>\(captured.text)</selected>"
-        return LLMRequest(system: system, user: user, expectsJSON: true, maxTokens: 1500, kind: .word)
+        return LLMRequest(system: system, user: user, expectsJSON: true, maxTokens: formsRule == nil ? 1500 : 2500, kind: .word)
+    }
+
+    /// What goes in the word card's pronunciation slot. Languages differ in what a learner actually needs:
+    /// Russian learners need to know which vowel is stressed, not an IPA transcription.
+    static func wordPhoneticRule(source: AppLanguage?) -> String {
+        switch source {
+        case .russian:
+            return "the term itself with the stressed vowel marked by a combining acute accent (U+0301) placed right after it, " +
+                "e.g. молоко́, кни́ги; no mark on ё (always stressed) or on one-syllable words; never IPA"
+        case .simplifiedChinese, .traditionalChinese:
+            return "pinyin with tone marks"
+        case .japanese:
+            return "reading in hiragana (empty string if the term is already all kana)"
+        case .korean:
+            return "Revised Romanization"
+        default:
+            return "IPA like /rʌn/"
+        }
+    }
+
+    static func wordPosRule(source: AppLanguage?, native: AppLanguage) -> String {
+        switch source {
+        case .english, nil:
+            return "n. / v. / adj. …"
+        case .russian:
+            return "very short part-of-speech label in \(native.promptName), plus aspect for verbs or gender for nouns, " +
+                "e.g. 名·阴 / 动·未完 / 动·完 / 形 for Chinese"
+        default:
+            return "very short part-of-speech label in \(native.promptName), e.g. 名 / 动 / 形 / 副 for Chinese"
+        }
+    }
+
+    /// Inflection is what learners of these languages look up; nil means the card has no forms section.
+    static func wordFormsRule(source: AppLanguage?, native: AppLanguage) -> String? {
+        let chinese = native == .simplifiedChinese || native == .traditionalChinese
+        let perPos: String
+        switch source {
+        case .russian:
+            let cases = chinese ? " Name the cases 一格 / 二格 / 三格 / 四格 / 五格 / 六格." : ""
+            perPos = """
+            - Noun: summary = gender, animacy if it matters, and anything irregular (fleeting vowel, shifting stress, \
+            plural-only). One table, columns singular / plural, six rows for the six cases.\(cases)
+            - Verb: summary = aspect and its aspectual partner, conjugation, the case it governs. Tables: present tense \
+            (future for perfective verbs) for я / ты / он·она / мы / вы / они; past tense for он / она / оно / они; imperative.
+            - Adjective: summary = type of stem. One table, columns masculine / feminine / neuter / plural, rows: \
+            long form (nominative), short form if it exists; comparative in the summary.
+            - Pronoun / numeral: the six-case table.
+            Mark stress (U+0301) on every form in the tables, same convention as "phonetic".
+            """
+        case .german:
+            perPos = """
+            - Noun: summary = article, genitive singular and plural (e.g. "der Tisch, -(e)s, -e"). No table.
+            - Verb: summary = principal parts (infinitive, präteritum, partizip II with haben/sein), separable prefix, \
+            governed case. Table: present tense for ich / du / er / wir / ihr / sie if irregular, otherwise no table.
+            - Adjective: comparative and superlative in the summary. No table.
+            """
+        case .french, .spanish:
+            perPos = """
+            - Noun: summary = gender and irregular plural if any. No table.
+            - Adjective: masculine / feminine / plural forms in the summary.
+            - Verb: summary = verb group, auxiliary (French) and any irregularity. Table: present tense for the six persons; \
+            add the past participle in the summary.
+            """
+        default:
+            return nil
+        }
+        return """
+        "forms" describes how the word inflects, which matters more to learners of this language than an English-style \
+        part of speech. Describe the dictionary form (lemma). Write the summary, titles and row labels in \(native.promptName).
+        \(perPos)
+        Omit "forms" (or set it to null) for multi-word phrases and words that do not inflect.
+        """
     }
 
     // MARK: Capsule: key expressions + "is it worth analysing?" (JSON)
@@ -97,7 +184,7 @@ enum Prompts {
         looking at (e.g. "倒装 + 非限定性定语从句" or "地道口语：委婉拒绝"), empty if false.
 
         Return ONLY JSON:
-        {"items":[{"text":"...","kind":"word|phrase|phrasal_verb|collocation|idiom|pattern|slang","phonetic":"IPA or empty",\
+        {"items":[{"text":"...","kind":"word|phrase|phrasal_verb|collocation|idiom|pattern|slang","phonetic":"IPA for English, the expression with stress marks (U+0301) for Russian, otherwise empty",\
         "meaning":"...","note":"..."}],"analysis_worthy":true|false,"analysis_hint":"..."}
         """
         var user = ""
@@ -185,6 +272,7 @@ enum Prompts {
             if let term = word.term, !term.isEmpty { lines.append("term: \(term)") }
             if let lemma = word.lemma, !lemma.isEmpty, lemma != word.term { lines.append("lemma: \(lemma)") }
             if let p = word.phonetic, !p.isEmpty { lines.append("phonetic: \(p)") }
+            if let f = word.forms?.summary, !f.isEmpty { lines.append("forms: \(f)") }
             if let m = word.contextMeaning, !m.isEmpty { lines.append("meaning here: \(m)") }
             for sense in word.senses ?? [] {
                 if let m = sense.meaning, !m.isEmpty { lines.append("sense: \(sense.pos ?? "") \(m)") }

@@ -30,6 +30,8 @@ final class PopupViewModel: ObservableObject {
     @Published var notConfigured = false
 
     @Published var capsuleExpanded = false
+    /// Whether the word card's declension / conjugation tables are shown.
+    @Published var formsExpanded = false
     @Published var keyItemsPhase: Phase = .idle
     @Published var keyItems: KeyItemsResult?
 
@@ -130,6 +132,7 @@ final class PopupViewModel: ObservableObject {
         analysis = nil
         analysisPhase = .idle
         capsuleExpanded = false
+        formsExpanded = false
         notConfigured = false
         cachedAt = nil
         self.bypassCache = bypassCache
@@ -399,7 +402,10 @@ final class PopupViewModel: ObservableObject {
         let meaning = result.contextMeaning?.isEmpty == false
             ? result.contextMeaning!
             : (result.senses ?? []).compactMap { s in s.meaning.map { "\(s.pos ?? "") \($0)" } }.joined(separator: "；")
-        VocabularyStore.shared.add(term: term, phonetic: result.phonetic, kind: term.contains(" ") ? "phrase" : "word",
+        // The entry is keyed by the lemma, so it needs the lemma's reading, not that of the inflected form selected.
+        let isLemma = (result.lemma ?? "").isEmpty || result.lemma?.lowercased() == result.term?.lowercased()
+        let phonetic = isLemma ? result.phonetic : result.lemmaPhonetic
+        VocabularyStore.shared.add(term: term, phonetic: phonetic, kind: term.contains(" ") ? "phrase" : "word",
                                    meaning: meaning, note: result.note, sentence: result.example?.source,
                                    sentenceTranslation: result.example?.target, sourceApp: captured.appName)
     }

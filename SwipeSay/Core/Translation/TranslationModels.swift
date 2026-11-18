@@ -32,17 +32,60 @@ struct WordResult: Decodable, Equatable {
         var target: String?
     }
 
+    /// How the word inflects (declension, conjugation, gender…), for languages where that matters more than
+    /// an English-style part of speech.
+    struct Forms: Decodable, Equatable {
+        struct Table: Decodable, Equatable, Hashable {
+            struct Row: Decodable, Equatable, Hashable {
+                var label: String?
+                var cells: [String]?
+            }
+            var title: String?
+            var columns: [String]?
+            var rows: [Row]?
+        }
+        var summary: String?
+        var tables: [Table]?
+
+        /// Tables that actually have something in them.
+        var visibleTables: [Table] {
+            (tables ?? []).filter { !($0.rows ?? []).isEmpty }
+        }
+        var isEmpty: Bool { (summary ?? "").isEmpty && visibleTables.isEmpty }
+    }
+
     var term: String?
     var lemma: String?
     var phonetic: String?
+    var lemmaPhonetic: String?
     var contextMeaning: String?
     var senses: [Sense]?
     var example: Example?
     var note: String?
+    var forms: Forms?
 
     enum CodingKeys: String, CodingKey {
-        case term, lemma, phonetic, senses, example, note
+        case term, lemma, phonetic, senses, example, note, forms
+        case lemmaPhonetic = "lemma_phonetic"
         case contextMeaning = "context_meaning"
+    }
+}
+
+enum Phonetic {
+    /// True when `phonetic` is just `term` with stress / accent marks added (e.g. Russian "молоко́" for "молоко").
+    /// Such a reading replaces the headword instead of being shown next to it.
+    static func isMarkedSpelling(_ phonetic: String, of term: String) -> Bool {
+        guard !phonetic.isEmpty, phonetic != term else { return false }
+        return stripMarks(phonetic).lowercased() == stripMarks(term).lowercased()
+    }
+
+    /// Removes combining marks except the ones that are part of ordinary spelling (ё, й stay intact).
+    static func stripMarks(_ s: String) -> String {
+        let decomposed = s.decomposedStringWithCanonicalMapping
+        let stripped = String(String.UnicodeScalarView(decomposed.unicodeScalars.filter {
+            $0.value != 0x0301 && $0.value != 0x0300
+        }))
+        return stripped.precomposedStringWithCanonicalMapping
     }
 }
 
