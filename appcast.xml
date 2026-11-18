@@ -6,6 +6,26 @@
     <description><![CDATA[SwipeSay updates]]></description>
     <language>zh-CN</language>
     <item>
+      <title>SwipeSay 0.3.1</title>
+      <pubDate>Wed, 18 Nov 2026 16:26:52 GMT</pubDate>
+      <sparkle:version>5</sparkle:version>
+      <sparkle:shortVersionString>0.3.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[<div class="markdown-heading"><h2 class="heading-element">修复</h2><a id="user-content-修复" class="anchor" aria-label="Permalink: 修复" href="#修复"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<ul>
+<li>
+<strong>翻译弹窗可以拖动了</strong>：按住弹窗的标题栏或底栏就能把它挪到别处。正文仍然可以选中复制。</li>
+<li>
+<strong>拖动后自动固定</strong>：弹窗被拖动过，就当作已固定（📌），回到原来的程序点一下也不会把它关掉。没有拖动、也没有固定时，点弹窗外面照旧会关闭。</li>
+</ul>
+<div class="markdown-heading"><h2 class="heading-element">说明</h2><a id="user-content-说明" class="anchor" aria-label="Permalink: 说明" href="#说明"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<ul>
+<li>已授予的权限、保存的 API Key 和生词本升级后都会保留。</li>
+</ul>
+]]></description>
+      <enclosure url="https://github.com/jiaqianjing/SwipeSay/releases/download/v0.3.1/SwipeSay-0.3.1.dmg" type="application/octet-stream" sparkle:edSignature="oaX5taB2nt7IhDkGP5GloxlGgXxWGfpPbeI6xmCTzSZWYCS7+sKyyqpWm4ouYYtb8u/T6KPRhtaHfekiB8F7DA==" length="2900199" />
+    </item>
+    <item>
       <title>SwipeSay 0.3.0</title>
       <pubDate>Tue, 17 Nov 2026 16:05:45 GMT</pubDate>
       <sparkle:version>4</sparkle:version>
