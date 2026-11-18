@@ -6,6 +6,31 @@
     <description><![CDATA[SwipeSay updates]]></description>
     <language>zh-CN</language>
     <item>
+      <title>SwipeSay 0.3.2</title>
+      <pubDate>Wed, 18 Nov 2026 17:09:37 GMT</pubDate>
+      <sparkle:version>6</sparkle:version>
+      <sparkle:shortVersionString>0.3.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description><![CDATA[<div class="markdown-heading"><h2 class="heading-element">改进</h2><a id="user-content-改进" class="anchor" aria-label="Permalink: 改进" href="#改进"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<ul>
+<li>
+<strong>俄语单词标重音</strong>：查俄语单词时，不再显示 IPA 音标，而是直接在单词上标出重音，比如 кни́ги。「原形」和生词本里也一样。</li>
+<li>
+<strong>变格 / 变位表</strong>：俄语单词卡新增「词形」一行，概括性、格、体等信息。点「变化表」可以展开完整表格：名词的六个格（单复数），动词的体和变位，形容词的各性形式。表格里的每个词形都标了重音。</li>
+<li>
+<strong>词性标签更贴切</strong>：俄语的词性改用「名·阴」「动·未完」这类标签。其他非英语语言用「名 / 动 / 形」。英语单词卡不变。</li>
+<li>
+<strong>单个俄语词识别更准</strong>：以前像 книга、молоко 这样的单词，有时会被认成保加利亚语或乌克兰语，现在能正确识别为俄语。</li>
+</ul>
+<div class="markdown-heading"><h2 class="heading-element">说明</h2><a id="user-content-说明" class="anchor" aria-label="Permalink: 说明" href="#说明"><span aria-hidden="true" class="octicon octicon-link"></span></a></div>
+<ul>
+<li>已授予的权限、保存的 API Key 和生词本升级后都会保留。</li>
+<li>以前查过的单词会重新查询一次，以便显示新内容。</li>
+</ul>
+]]></description>
+      <enclosure url="https://github.com/jiaqianjing/SwipeSay/releases/download/v0.3.2/SwipeSay-0.3.2.dmg" type="application/octet-stream" sparkle:edSignature="DUOFlcvv7qYMMje4QEbY6Y6yUA3pKRJ+Z63flpQkZtt9HBDDyIfNHGKANLgsIAmYopwA1tP++SGs/i35xJ82Bg==" length="2919927" />
+    </item>
+    <item>
       <title>SwipeSay 0.3.1</title>
       <pubDate>Wed, 18 Nov 2026 16:26:52 GMT</pubDate>
       <sparkle:version>5</sparkle:version>
