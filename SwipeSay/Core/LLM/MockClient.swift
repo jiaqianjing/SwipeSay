@@ -23,6 +23,9 @@ struct MockClient: LLMClient {
                 - enter 更中性，只是陈述进入这个动作。
                 例：No sooner had she entered the house than she felt it. 她一进屋就感觉到了。
                 """
+            } else if request.system.contains("learner's dictionary"),
+                      request.user.unicodeScalars.contains(where: { (0x0400...0x04FF).contains($0.value) }) {
+                reply = #"{"term":"книги","lemma":"книга","phonetic":"кни́ги","lemma_phonetic":"кни́га","context_meaning":"书（复数）","senses":[{"pos":"名·阴","meaning":"书；书籍"},{"pos":"名·阴","meaning":"（账）簿，册"}],"example":{"source":"На столе лежат книги.","target":"桌上放着几本书。"},"note":"复数二格 книг 没有词尾，常见于数词之后：пять книг。","forms":{"summary":"阴性 · 第一变格（-а 结尾）· 非动物名词","tables":[{"title":"变格","columns":["单数","复数"],"rows":[{"label":"一格","cells":["кни́га","кни́ги"]},{"label":"二格","cells":["кни́ги","кни́г"]},{"label":"三格","cells":["кни́ге","кни́гам"]},{"label":"四格","cells":["кни́гу","кни́ги"]},{"label":"五格","cells":["кни́гой","кни́гами"]},{"label":"六格","cells":["кни́ге","кни́гах"]}]}]}}"#
             } else if request.system.contains("learner's dictionary") {
                 reply = #"{"term":"ubiquitous","lemma":"ubiquitous","phonetic":"/juːˈbɪkwɪtəs/","context_meaning":"无处不在的","senses":[{"pos":"adj.","meaning":"普遍存在的；无所不在的"}],"example":{"source":"Smartphones have become ubiquitous in modern life.","target":"智能手机在现代生活中已无处不在。"},"note":"常与 become 连用；名词形式 ubiquity。"}"#
             } else if request.system.contains("analysis_worthy") {

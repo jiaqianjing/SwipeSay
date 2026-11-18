@@ -128,8 +128,9 @@ struct VocabDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 HStack(alignment: .firstTextBaseline, spacing: 10) {
-                    Text(item.term).font(.system(size: 30, weight: .bold)).textSelection(.enabled)
-                    if !item.phonetic.isEmpty {
+                    let marked = Phonetic.isMarkedSpelling(item.phonetic, of: item.term)
+                    Text(marked ? item.phonetic : item.term).font(.system(size: 30, weight: .bold)).textSelection(.enabled)
+                    if !marked, !item.phonetic.isEmpty {
                         Text(item.phonetic).font(.system(size: 15)).foregroundStyle(.secondary)
                     }
                     Button { Speaker.speak(item.term) } label: { Image(systemName: "speaker.wave.2.fill") }
@@ -240,8 +241,9 @@ struct ReviewView: View {
                 let item = queue[index]
                 VStack(spacing: 16) {
                     Spacer()
-                    Text(item.term).font(.system(size: 34, weight: .bold))
-                    if !item.phonetic.isEmpty { Text(item.phonetic).foregroundStyle(.secondary) }
+                    let marked = Phonetic.isMarkedSpelling(item.phonetic, of: item.term)
+                    Text(marked ? item.phonetic : item.term).font(.system(size: 34, weight: .bold))
+                    if !marked, !item.phonetic.isEmpty { Text(item.phonetic).foregroundStyle(.secondary) }
                     if !item.sentence.isEmpty {
                         Text(item.sentence)
                             .font(.system(size: 14)).foregroundStyle(.secondary)

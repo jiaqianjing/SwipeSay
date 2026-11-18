@@ -98,6 +98,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard UserDefaults.standard.bool(forKey: "SwipeSayDemoExpand") else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
             PopupController.shared.debugModel?.toggleCapsule()
+            PopupController.shared.debugModel?.formsExpanded = true
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.8) {
             PopupController.shared.debugModel?.loadAnalysis()
