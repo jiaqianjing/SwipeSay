@@ -186,7 +186,7 @@ actor UsageStore {
         ]
         let kinds: [(UsageKind, Int, Int)] = [(.translate, 450, 120), (.word, 380, 160), (.keyItems, 700, 260), (.analysis, 800, 520)]
         let calendar = Calendar.current
-        for offset in 1...30 {
+        for offset in 0...30 {
             guard let date = calendar.date(byAdding: .day, value: -offset, to: Date()) else { continue }
             let day = calendar.startOfDay(for: date)
             for (provider, name, model, perDay) in samples {

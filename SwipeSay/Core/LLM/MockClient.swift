@@ -18,11 +18,7 @@ struct MockClient: LLMClient {
         makeUsageStream(config: Self.config, request: request) { continuation, meter in
             let reply: String
             if request.system.contains("follow-up question") {
-                let question = request.user.components(separatedBy: "<question>\n").last?
-                    .components(separatedBy: "\n</question>").first ?? ""
-                let turn = request.user.components(separatedBy: "<q>").count
                 reply = """
-                （第 \(turn) 轮 · Mock）关于「\(question)」：
                 - 可以换成 enter，但语气会变：set foot in 强调「踏进去的那一刻」，常带“第一次 / 终于”的意味。
                 - enter 更中性，只是陈述进入这个动作。
                 例：No sooner had she entered the house than she felt it. 她一进屋就感觉到了。
