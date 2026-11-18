@@ -90,6 +90,10 @@ final class PopupViewModel: ObservableObject {
     /// An outside click must not throw away a typed question or an ongoing conversation.
     var keepsOpen: Bool { pinned || !followUpDraft.isEmpty || !followUps.isEmpty }
 
+    /// Moving the popup means the user wants to keep it around, so pin it: a click elsewhere
+    /// (e.g. back in the app being read) no longer dismisses it.
+    func didMoveWindow() { pinned = true }
+
     // MARK: Actions
 
     func start() {
