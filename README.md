@@ -48,6 +48,26 @@ Expand the **重点表达** capsule to pull out the phrases, collocations and wo
 
 </td>
 </tr>
+<tr>
+<td width="33%" valign="top">
+
+### 💬 Ask follow-ups
+Not sure why it's phrased that way? Ask right in the popup. The answer knows the sentence, its context and the translation, so you never paste anything again.
+
+</td>
+<td width="33%" valign="top">
+
+### ⚡ Instant repeats
+Results are cached on your Mac. Select the same text again and it appears immediately, with no request and no tokens spent. One click re-translates.
+
+</td>
+<td width="33%" valign="top">
+
+### 📊 Know your usage
+A usage page shows tokens per day, per model and per feature, with optional cost estimates, so you can pick the model that fits your budget.
+
+</td>
+</tr>
 </table>
 
 ## A closer look
@@ -78,6 +98,34 @@ Everything you look up or star is saved with its source sentence and app. You ca
 
 <img src="docs/images/vocabulary.png" alt="Vocabulary book with flashcard review" width="900">
 
+<table>
+<tr>
+<td width="50%" valign="top">
+
+#### Follow-up questions
+Once a translation is done, type a question at the bottom of the popup: *can I say "enter" here?*, *give me two more examples*, *how would I say this casually?* Answers stream in your own language at your level, and you can keep the conversation going. While you're typing, clicking elsewhere won't close the popup.
+
+<img src="docs/images/followup.png" alt="A follow-up question about “set foot in” answered in the popup">
+
+</td>
+<td width="50%" valign="top">
+
+#### Usage page
+Settings → 用量 shows today, the last 7 and 30 days, a daily chart grouped by model, service or feature, and a breakdown table. Turn on 显示估算费用 for cost estimates based on dated reference prices. Export it all to CSV.
+
+When a provider doesn't report token counts, SwipeSay estimates them from the text and marks those numbers with 约. To get exact counts, SwipeSay asks only the official OpenAI and DeepSeek APIs to include usage; requests to any other server are sent unchanged.
+
+</td>
+</tr>
+</table>
+
+<img src="docs/images/usage.png" alt="Usage page with daily token chart by model" width="900">
+
+#### And a few more things
+- **Translation cache**: repeat lookups show instantly with a ⚡ 来自缓存 marker and a 重新翻译 button. Choose how long to keep results (30 days, 90 days or forever) and how much space to use (256 MB to 5 GB) in Settings → 通用 → 缓存.
+- **Natural voices**: pronunciation uses the best voice installed on your Mac (Premium, then Enhanced). Pick and preview voices in Settings → 学习 → 朗读声音, and download better ones in System Settings → Accessibility → Spoken Content.
+- **Crisp on every screen**: the quick button snaps to the pixel grid, so it stays sharp on Retina and external displays alike.
+
 ## Bring your own model
 
 | Provider | Sign-in | Default model |
@@ -90,6 +138,11 @@ Everything you look up or star is saved with its source sentence and app. You ca
 | **OpenAI-compatible** | Optional key | OpenRouter, Moonshot, Qwen, Zhipu, Ollama, LM Studio… |
 
 The defaults are each provider's fast, inexpensive tier, because translation is short, high-volume work. You can pick any model in Settings → 模型服务. API keys are stored in the login Keychain.
+
+- **A clean model list.** Paste a key and the list loads by itself. Embedding, audio, image and other non-chat models, dated snapshots and deprecated models are hidden, the rest are sorted newest first, and the suggested models show reference prices. Turn on 显示全部模型 to see everything.
+- **ChatGPT subscription.** The model list comes from your own account, so it only offers models your plan can use. If a model isn't available, you get a clear message instead of an HTTP error.
+- **测试连接** shows the time to first token and the total time, which makes it easy to compare providers and models.
+- When a default model is retired upstream, SwipeSay moves you to its replacement on update.
 
 ## Install
 
@@ -116,6 +169,13 @@ tccutil reset Accessibility com.kenjia.swipesay
 
 </details>
 
+## Privacy
+
+- Text goes only to the model provider you chose. SwipeSay has no server of its own and no analytics.
+- API keys and the ChatGPT sign-in are kept in the login Keychain.
+- Your vocabulary book and the translation cache live in `~/Library/Application Support/SwipeSay` on this Mac. The cache holds the source text and its translation; clear it any time in Settings → 通用 → 缓存.
+- The usage page stores only numbers and model names, never text.
+
 ## Shortcuts
 
 | Action | Default |
@@ -126,6 +186,8 @@ tccutil reset Accessibility com.kenjia.swipesay
 | Close popup | <kbd>Esc</kbd> |
 
 You can change any of them in Settings → 快捷键.
+
+In the follow-up box, <kbd>Return</kbd> sends and <kbd>⇧</kbd> <kbd>Return</kbd> adds a new line. <kbd>Esc</kbd> clears what you typed first, then closes the popup.
 
 ## Build from source
 
@@ -149,12 +211,16 @@ SwipeSay/
     Capture/                     AX selection + context, quick button, screenshot OCR
     Hotkey/                      Carbon global hotkeys, Shortcut model
     LLM/                         provider configs, Keychain, clients (OpenAI-compatible,
-                                 Anthropic, Gemini, ChatGPT/Codex), ChatGPT OAuth
+                                 Anthropic, Gemini, ChatGPT/Codex), ChatGPT OAuth,
+                                 ModelCatalog (model filtering, sorting, reference prices)
     Translation/                 prompts, response models, language/mode planning
+    Cache/                       translation cache (separate SwiftData store, LRU eviction)
+    Usage/                       usage tracking, daily totals store, cost estimates
     Vocabulary/                  SwiftData store (~/Library/Application Support/SwipeSay)
     Settings/                    AppSettings (UserDefaults)
+    Update/                      Sparkle updater
   UI/
-    Popup/                       floating panel, view model, capsule + analysis views
+    Popup/                       floating panel, view model, capsule, analysis, follow-ups
     Settings/  Vocabulary/  Components/
 ```
 
@@ -178,17 +244,19 @@ SwipeSay.app/Contents/MacOS/SwipeSay -SwipeSayMock YES \
 | `-SwipeSayMock YES` | Canned responses and an in-memory vocabulary |
 | `-SwipeSayDemo "text"` | Opens a popup for that text |
 | `-SwipeSayDemoExpand YES` | Also opens the capsule and the analysis |
+| `-SwipeSayDemoFollowUp "question"` | Also asks that follow-up question once the translation is done |
 | `-SwipeSayDemoVocabulary YES` | Fills the in-memory vocabulary with sample entries |
-| `-SwipeSayOpen <pane>` | Opens `general`, `providers`, `shortcuts`, `learning` or `vocabulary` |
+| `-SwipeSayOpen <pane>` | Opens `general`, `providers`, `shortcuts`, `learning`, `usage` or `vocabulary` |
 | `-SwipeSayDemoSelect <term>` | Selects that entry in the vocabulary book |
 | `-SwipeSayMockModel <name>` | Model name shown in the popup footer |
 | `-SwipeSayAppearance light\|dark` | Forces the app's appearance |
 | `-SwipeSayFlatBackground YES` | Solid backgrounds instead of the blur |
 | `-SwipeSaySnapshot <prefix>` | Writes each visible window to `<prefix>-<n>.png`, then quits. This needs no Screen Recording permission |
+| `-SwipeSaySnapshotDelay <seconds>` | How long to wait before the snapshot (default 6) |
 | `-SwipeSayDemoBaseURL <url>` | Adds and selects an OpenAI-compatible provider at that URL, for example a local fake server |
 | `-SwipeSayDemoRunTest YES` | Presses 测试连接 once the provider pane opens |
 
-Mock mode never touches the keychain, and it keeps providers in memory, so your real settings are left alone. The screenshots in this README were made with these flags, using a background illustration generated by Codex.
+Mock mode never touches the keychain, and it keeps providers, the cache and usage in memory (with sample usage history), so your real settings and data are left alone. The screenshots in this README were made with these flags, using a background illustration generated by Codex.
 
 </details>
 
@@ -209,7 +277,7 @@ Reading other apps' selections (`AXUIElement`), posting ⌘C as a fallback, and 
 One command builds, signs, notarizes and publishes a release, then updates the Sparkle feed (`appcast.xml` on `main`):
 
 ```bash
-NOTARY_PROFILE=<notarytool-profile> scripts/release.sh 0.2.1 --notes notes.md
+NOTARY_PROFILE=<notarytool-profile> scripts/release.sh 0.3.1 --notes notes.md
 ```
 
 - Run it from a clean `main` that is in sync with `origin/main`. It bumps the version in `project.yml`, adds one to the build number, archives a Universal build and exports it with Developer ID.
@@ -223,7 +291,7 @@ Prerequisites on the release machine:
 - A notarytool profile: `xcrun notarytool store-credentials <name> --apple-id … --team-id UBS9FUBNFR`.
 - The Sparkle EdDSA private key in the login keychain, alongside the signing certificate. It is Sparkle's default account (`ed25519`), shared by all of the maintainer's apps; the public key is in `SwipeSay/Info.plist`. On a new machine, import the backup with `generate_keys -f <backup-file>`. Keep the backup in a password manager and never commit it.
 
-Stored data is versioned. `VocabularyStore.swift` explains how to add a schema version and a migration stage when a model changes.
+Stored data is versioned: the vocabulary, cache and usage stores each have their own schema. `VocabularyStore.swift` explains how to add a schema version and a migration stage when a model changes.
 
 </details>
 

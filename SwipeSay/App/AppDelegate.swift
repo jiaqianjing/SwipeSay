@@ -40,7 +40,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             seedDemoVocabulary()
         }
         if let prefix = UserDefaults.standard.string(forKey: "SwipeSaySnapshot") {
-            let delay = UserDefaults.standard.object(forKey: "SwipeSaySnapshotDelay") as? Double ?? 6
+            // Launch arguments arrive as strings; double(forKey:) parses them (0 when unset).
+            let requested = UserDefaults.standard.double(forKey: "SwipeSaySnapshotDelay")
+            let delay = requested > 0 ? requested : 6
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                 self?.snapshotWindows(to: prefix)
                 NSApp.terminate(nil)
