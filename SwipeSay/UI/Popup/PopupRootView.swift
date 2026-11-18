@@ -79,11 +79,13 @@ struct PopupRootView: View {
 
     private var header: some View {
         HStack(spacing: 6) {
-            sourceIcon
+            // Labels let clicks through to the drag area behind the header.
+            sourceIcon.allowsHitTesting(false)
             Text(sourceTitle)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .allowsHitTesting(false)
             if model.usedContext {
                 Button { showContext.toggle() } label: {
                     HStack(spacing: 3) {
@@ -122,6 +124,7 @@ struct PopupRootView: View {
         .padding(.horizontal, 12)
         .padding(.top, 10)
         .padding(.bottom, 4)
+        .background(WindowDragArea(onMoved: model.didMoveWindow))
     }
 
     @ViewBuilder private var sourceIcon: some View {
@@ -284,9 +287,10 @@ struct PopupRootView: View {
 
     private var footer: some View {
         HStack(spacing: 6) {
-            Image(systemName: "cpu").font(.system(size: 9))
+            Image(systemName: "cpu").font(.system(size: 9)).allowsHitTesting(false)
             Text(model.providerLabel.isEmpty ? "未配置模型" : model.providerLabel)
                 .lineLimit(1)
+                .allowsHitTesting(false)
             Spacer()
             if let cachedAt = model.cachedAt {
                 Text("⚡ 来自缓存 · \(TranslationCachePolicy.age(since: cachedAt))")
@@ -329,6 +333,7 @@ struct PopupRootView: View {
         .foregroundStyle(.tertiary)
         .padding(.horizontal, 14)
         .padding(.vertical, 7)
+        .background(WindowDragArea(onMoved: model.didMoveWindow)) // above the fill, which would take the clicks
         .background(Color.primary.opacity(0.035))
     }
 }
