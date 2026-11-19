@@ -1,4 +1,5 @@
 import AppKit
+import SwipeSayKit
 import SwiftUI
 
 /// Watches for mouse text selections in other apps and offers a small floating SwipeSay button.

@@ -1,4 +1,5 @@
 import SwiftUI
+import SwipeSayKit
 import AVFoundation
 
 struct SettingsScreen: View {

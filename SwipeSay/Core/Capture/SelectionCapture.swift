@@ -1,4 +1,5 @@
 import AppKit
+import SwipeSayKit
 import ApplicationServices
 
 /// Reads the current text selection in the frontmost app together with the surrounding text.

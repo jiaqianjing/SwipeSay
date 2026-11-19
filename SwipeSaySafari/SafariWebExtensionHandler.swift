@@ -1,4 +1,5 @@
 import SafariServices
+import SwipeSayKit
 
 /// Native side of the Safari web extension. The content script sends requests through background.js
 /// (`browser.runtime.sendNativeMessage`); each one arrives here, is answered by `WebBridge` and sent back.

@@ -1,4 +1,5 @@
 import SwiftUI
+import SwipeSayKit
 import AppKit
 
 private struct ContentHeightKey: PreferenceKey {

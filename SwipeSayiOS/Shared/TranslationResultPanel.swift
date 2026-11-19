@@ -1,4 +1,5 @@
 import SwiftUI
+import SwipeSayKit
 
 /// The translation result on iOS: source quote, translation or word card, the 重点表达 capsule and the follow-up
 /// conversation. Used by the app's 翻译 tab and by the action extension.

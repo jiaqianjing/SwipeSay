@@ -1,4 +1,5 @@
 import SwiftUI
+import SwipeSayKit
 
 struct ProvidersPane: View {
     @EnvironmentObject private var store: ProviderStore

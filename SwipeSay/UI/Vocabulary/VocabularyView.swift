@@ -1,4 +1,5 @@
 import SwiftUI
+import SwipeSayKit
 import SwiftData
 
 struct VocabularyView: View {

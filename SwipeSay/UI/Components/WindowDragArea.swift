@@ -1,4 +1,5 @@
 import SwiftUI
+import SwipeSayKit
 import AppKit
 
 /// A transparent strip that moves its window when dragged.

@@ -1,4 +1,5 @@
 import AppKit
+import SwipeSayKit
 import Vision
 
 /// Interactive region capture (system crosshair UI) + on-device OCR with Vision.

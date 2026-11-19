@@ -1,4 +1,5 @@
 import AppKit
+import SwipeSayKit
 import SwiftUI
 
 final class PopupPanel: NSPanel {
