@@ -57,6 +57,9 @@ enum TranslationService {
         if MockClient.isEnabled { return (MockClient(), MockClient.config) }
         #endif
         guard let config = ProviderStore.shared.active, config.isReady else { throw LLMError.notConfigured }
+        #if os(iOS)
+        guard AppSettings.shared.hasAIConsent(for: config) else { throw LLMError.consentRequired(config.name) }
+        #endif
         return (LLMClientFactory.make(config), config)
     }
 }

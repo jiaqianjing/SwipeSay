@@ -104,7 +104,7 @@ actor UsageStore {
             if inMemory {
                 configuration = ModelConfiguration(isStoredInMemoryOnly: true)
             } else {
-                let dir = URL.applicationSupportDirectory.appending(path: "SwipeSay", directoryHint: .isDirectory)
+                let dir = SharedStorage.directory
                 try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
                 configuration = ModelConfiguration(url: dir.appending(path: "Usage.store"))
             }

@@ -73,6 +73,16 @@ enum ProviderKind: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    /// Kinds this build offers. The ChatGPT subscription sign-in borrows the Codex CLI's OAuth client and a
+    /// localhost callback, which only the Mac app can do; the iOS app uses API keys only.
+    static var available: [ProviderKind] {
+        #if os(macOS)
+        return allCases
+        #else
+        return allCases.filter { $0 != .chatGPT }
+        #endif
+    }
+
     var needsAPIKey: Bool { self != .chatGPT && self != .openAICompatible }
     var usesAPIKey: Bool { self != .chatGPT }
 }
@@ -98,10 +108,20 @@ struct ProviderConfig: Codable, Identifiable, Hashable {
         nonmutating set { Keychain.set(newValue, for: keychainAccount) }
     }
 
+    /// Host the requests go to, e.g. "api.openai.com" (shown when asking for consent).
+    var endpointHost: String {
+        URL(string: baseURL.trimmingCharacters(in: .whitespaces))?.host ?? baseURL
+    }
+
     var isReady: Bool {
         if model.trimmingCharacters(in: .whitespaces).isEmpty { return false }
         switch kind {
-        case .chatGPT: return ChatGPTAuth.shared.isSignedIn
+        case .chatGPT:
+            #if os(macOS)
+            return ChatGPTAuth.shared.isSignedIn
+            #else
+            return false
+            #endif
         case .openAICompatible: return !baseURL.isEmpty
         default: return !(apiKey ?? "").isEmpty
         }
@@ -114,6 +134,7 @@ final class ProviderStore: ObservableObject {
     @Published var providers: [ProviderConfig] { didSet { persist() } }
     @Published var activeID: UUID? { didSet { persist() } }
 
+    private let defaults = SharedStorage.defaults
     private let storageKey = "providers.v1"
     private let activeKey = "providers.active"
     /// Debug mock mode keeps providers in memory, so trying things out never rewrites the real settings.
@@ -123,7 +144,7 @@ final class ProviderStore: ObservableObject {
         #if DEBUG
         if MockClient.isEnabled {
             inMemory = true
-            providers = [.chatGPT, .openAI, .anthropic, .gemini, .deepSeek].map { ProviderConfig(kind: $0) }
+            providers = ProviderKind.available.filter { $0 != .openAICompatible }.map { ProviderConfig(kind: $0) }
             // `-SwipeSayDemoBaseURL <url>` adds and selects an OpenAI-compatible provider at that URL
             // (for example a local fake server), so the settings flow can be exercised end to end.
             if let url = UserDefaults.standard.string(forKey: "SwipeSayDemoBaseURL") {
@@ -136,7 +157,8 @@ final class ProviderStore: ObservableObject {
             return
         }
         #endif
-        if let data = UserDefaults.standard.data(forKey: storageKey),
+        var loaded: [ProviderConfig] = []
+        if let data = defaults.data(forKey: storageKey),
            let saved = try? JSONDecoder().decode([ProviderConfig].self, from: data), !saved.isEmpty {
             // Move configs still on an old built-in default to the current one; user-picked models stay.
             let legacyDefaults: [ProviderKind: Set<String>] = [
@@ -144,15 +166,16 @@ final class ProviderStore: ObservableObject {
                 // Deprecated or retired upstream (see `defaultModel`); gemini-2.5-flash-lite is still served.
                 .gemini: ["gemini-2.5-flash", "gemini-2.5-pro"], .deepSeek: ["deepseek-chat", "deepseek-reasoner"],
             ]
-            providers = saved.map { config in
+            loaded = saved.filter { ProviderKind.available.contains($0.kind) }.map { config in
                 var c = config
                 if legacyDefaults[c.kind]?.contains(c.model) == true { c.model = c.kind.defaultModel }
                 return c
             }
-        } else {
-            providers = [.chatGPT, .openAI, .anthropic, .gemini, .deepSeek].map { ProviderConfig(kind: $0) }
         }
-        activeID = UserDefaults.standard.string(forKey: activeKey).flatMap(UUID.init(uuidString:))
+        providers = loaded.isEmpty
+            ? ProviderKind.available.filter { $0 != .openAICompatible }.map { ProviderConfig(kind: $0) }
+            : loaded
+        activeID = defaults.string(forKey: activeKey).flatMap(UUID.init(uuidString:))
     }
 
     var active: ProviderConfig? {
@@ -179,7 +202,7 @@ final class ProviderStore: ObservableObject {
 
     private func persist() {
         guard !inMemory else { return }
-        if let data = try? JSONEncoder().encode(providers) { UserDefaults.standard.set(data, forKey: storageKey) }
-        UserDefaults.standard.set(activeID?.uuidString, forKey: activeKey)
+        if let data = try? JSONEncoder().encode(providers) { defaults.set(data, forKey: storageKey) }
+        defaults.set(activeID?.uuidString, forKey: activeKey)
     }
 }

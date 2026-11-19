@@ -2,11 +2,16 @@ name: SwipeSay
 options:
   deploymentTarget:
     macOS: "14.0"
+    iOS: "17.0"
 settings:
   base:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "0.3.2"
     CURRENT_PROJECT_VERSION: "6"
+    # The iOS app is versioned on its own. These are kept out of the quoted MARKETING_VERSION /
+    # CURRENT_PROJECT_VERSION lines on purpose: scripts/release.sh rewrites those for the Mac app.
+    SWIPESAY_IOS_VERSION: 1.0.0
+    SWIPESAY_IOS_BUILD: 1
 packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
@@ -36,8 +41,97 @@ targets:
         # OAuth callback server are not possible inside the App Sandbox.
         ENABLE_APP_SANDBOX: NO
         ENABLE_HARDENED_RUNTIME: YES
+
+  # iPhone / iPad app for the App Store. Shares Core and the result views with the Mac app; everything that
+  # needs macOS (Accessibility capture, global hotkeys, screen capture, Sparkle, ChatGPT sign-in) is left out.
+  SwipeSayiOS:
+    type: application
+    platform: iOS
+    sources:
+      - path: SwipeSayiOS
+        excludes:
+          - Info.plist
+          - "*.entitlements"
+      - path: SwipeSay/Core
+        excludes: &iosCoreExcludes
+          - Capture
+          - Hotkey
+          - Update
+          - LLM/ChatGPTAuth.swift
+          - LLM/ChatGPTClient.swift
+      - path: SwipeSay/UI/Components/Theme.swift
+      - path: SwipeSay/UI/Popup/PopupViewModel.swift
+      - path: SwipeSay/UI/Popup/ResultViews.swift
+      - path: SwipeSay/UI/Vocabulary/VocabularyView.swift
+    dependencies:
+      - target: SwipeSayAction
+    settings:
+      base:
+        PRODUCT_NAME: SwipeSay
+        PRODUCT_BUNDLE_IDENTIFIER: com.kenjia.swipesay.ios
+        MARKETING_VERSION: $(SWIPESAY_IOS_VERSION)
+        CURRENT_PROJECT_VERSION: $(SWIPESAY_IOS_BUILD)
+        DEVELOPMENT_TEAM: UBS9FUBNFR
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: SwipeSayiOS/SwipeSayiOS.entitlements
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SUPPORTS_MACCATALYST: NO
+        # Keep the iPad build off Apple silicon Macs: the Mac app is distributed separately.
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: SwipeSayiOS/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: SwipeSay
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+
+  # "SwipeSay 翻译" in the share sheet: translates selected text from any app, and in Safari also reads the
+  # paragraph around the selection (GetSelection.js) for context.
+  SwipeSayAction:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: SwipeSayAction
+        excludes:
+          - Info.plist
+          - "*.entitlements"
+      - path: SwipeSayiOS/Shared
+      - path: SwipeSay/Core
+        excludes: *iosCoreExcludes
+      - path: SwipeSay/UI/Components/Theme.swift
+      - path: SwipeSay/UI/Popup/PopupViewModel.swift
+      - path: SwipeSay/UI/Popup/ResultViews.swift
+    settings:
+      base:
+        PRODUCT_NAME: SwipeSayAction
+        PRODUCT_BUNDLE_IDENTIFIER: com.kenjia.swipesay.ios.action
+        MARKETING_VERSION: $(SWIPESAY_IOS_VERSION)
+        CURRENT_PROJECT_VERSION: $(SWIPESAY_IOS_BUILD)
+        DEVELOPMENT_TEAM: UBS9FUBNFR
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: SwipeSayAction/SwipeSayAction.entitlements
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: SwipeSayAction/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: SwipeSay 翻译
+        APPLICATION_EXTENSION_API_ONLY: YES
 schemes:
   SwipeSay:
     build:
       targets:
         SwipeSay: all
+  SwipeSayiOS:
+    build:
+      targets:
+        SwipeSayiOS: all
+        SwipeSayAction: all
+    run:
+      config: Debug
+    archive:
+      config: Release

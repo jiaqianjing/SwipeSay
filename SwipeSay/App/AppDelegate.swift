@@ -37,7 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         // Sample words go only into the in-memory mock store, never the real vocabulary.
         if MockClient.isEnabled, UserDefaults.standard.bool(forKey: "SwipeSayDemoVocabulary") {
-            seedDemoVocabulary()
+            VocabularyStore.shared.seedDemo()
         }
         if let prefix = UserDefaults.standard.string(forKey: "SwipeSaySnapshot") {
             // Launch arguments arrive as strings; double(forKey:) parses them (0 when unset).
@@ -120,34 +120,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// `-SwipeSayDemoVocabulary YES` (mock mode only) fills the in-memory vocabulary with sample entries.
-    private func seedDemoVocabulary() {
-        let samples: [(String, String, String, String, String, String, String)] = [
-            ("ubiquitous", "/juːˈbɪkwɪtəs/", "word", "无处不在的", "常与 become 连用；名词形式 ubiquity。",
-             "Smartphones have become ubiquitous in modern life.", "智能手机在现代生活中已无处不在。"),
-            ("no sooner … than", "", "pattern", "一……就……", "no sooner 置于句首时主谓倒装",
-             "No sooner had she set foot in the house than she felt an inexplicable sense of dread.",
-             "她刚一踏进那栋房子，就感到一种难以名状的恐惧。"),
-            ("set foot in", "", "phrase", "踏入；进入", "",
-             "No sooner had she set foot in the house than she felt an inexplicable sense of dread.",
-             "她刚一踏进那栋房子，就感到一种难以名状的恐惧。"),
-            ("inexplicable", "/ˌɪnɪkˈsplɪkəbl/", "word", "无法解释的", "比 strange 更正式",
-             "She felt an inexplicable sense of dread.", "她感到一种难以名状的恐惧。"),
-            ("hit the ground running", "", "idiom", "一上手就全力投入", "多用于新工作、新项目的开局",
-             "The new team hit the ground running.", "新团队一上来就进入了状态。"),
-            ("serendipity", "/ˌserənˈdɪpəti/", "word", "意外发现美好事物的运气", "",
-             "Finding this café was pure serendipity.", "发现这家咖啡馆纯属意外之喜。"),
-            ("take something with a grain of salt", "", "idiom", "对……半信半疑", "",
-             "Take online reviews with a grain of salt.", "网上的评价要有所保留地看。"),
-            ("meticulous", "/məˈtɪkjələs/", "word", "一丝不苟的", "褒义，强调对细节的极致关注",
-             "She keeps meticulous notes.", "她的笔记做得一丝不苟。"),
-        ]
-        let apps = ["Safari", "Safari", "Safari", "Safari", "Slack", "Notes", "Chrome", "Mail"]
-        for (i, s) in samples.enumerated() {
-            VocabularyStore.shared.add(term: s.0, phonetic: s.1, kind: s.2, meaning: s.3, note: s.4,
-                                       sentence: s.5, sentenceTranslation: s.6, sourceApp: apps[i])
-        }
-    }
     #endif
 
     // MARK: Actions

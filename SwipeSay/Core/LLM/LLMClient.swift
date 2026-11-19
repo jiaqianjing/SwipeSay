@@ -18,6 +18,8 @@ enum LLMError: LocalizedError {
     case auth(String)
     /// The ChatGPT plan can't use this model (not in the plan, or retired).
     case modelUnavailable(String)
+    /// iOS: the user hasn't yet agreed to send text to this provider.
+    case consentRequired(String)
 
     var errorDescription: String? {
         switch self {
@@ -25,7 +27,13 @@ enum LLMError: LocalizedError {
             let fallback = ProviderKind.chatGPT.defaultModel
             let hint = model == fallback ? "换一个模型" : "换一个模型（如 \(fallback)）"
             return "当前 ChatGPT 套餐不支持模型「\(model)」，或该模型已下线。请在 设置 › 模型服务 里\(hint)。"
-        case .notConfigured: return "还没有可用的模型服务，请在设置里登录 ChatGPT 或填写 API Key。"
+        case .notConfigured:
+            #if os(macOS)
+            return "还没有可用的模型服务，请在设置里登录 ChatGPT 或填写 API Key。"
+            #else
+            return "还没有可用的模型服务，请在 SwipeSay 的设置里填写 API Key。"
+            #endif
+        case .consentRequired(let name): return "使用「\(name)」前，需要先同意把要翻译的文字发送给它。"
         case .http(let code, let body): return "请求失败（HTTP \(code)）：\(LLMError.summarize(body))"
         case .invalidResponse(let msg): return "无法解析模型返回：\(msg)"
         case .refused(let msg): return "模型拒绝了此请求\(msg.isEmpty ? "" : "：\(msg)")"
@@ -67,7 +75,12 @@ enum LLMClientFactory {
         case .openAI, .deepSeek, .openAICompatible: return OpenAICompatibleClient(config: config)
         case .anthropic: return AnthropicClient(config: config)
         case .gemini: return GeminiClient(config: config)
-        case .chatGPT: return ChatGPTClient(config: config)
+        case .chatGPT:
+            #if os(macOS)
+            return ChatGPTClient(config: config)
+            #else
+            return OpenAICompatibleClient(config: config) // never offered on iOS; kept for exhaustiveness
+            #endif
         }
     }
 }

@@ -1,8 +1,10 @@
 import Foundation
 import Combine
 import NaturalLanguage
+#if os(macOS)
 import ServiceManagement
 import AppKit
+#endif
 
 enum AppLanguage: String, CaseIterable, Identifiable, Codable {
     case simplifiedChinese = "zh-Hans"
@@ -127,7 +129,7 @@ enum CacheSizeLimit: Int, CaseIterable, Identifiable {
 final class AppSettings: ObservableObject {
     static let shared = AppSettings()
 
-    private let defaults = UserDefaults.standard
+    private let defaults = SharedStorage.defaults
 
     private enum Key {
         static let target = "targetLanguage"
@@ -146,6 +148,7 @@ final class AppSettings: ObservableObject {
         static let cacheEnabled = "translationCache.enabled"
         static let cacheRetention = "translationCache.retention"
         static let cacheSizeLimit = "translationCache.sizeLimitMB"
+        static let aiConsent = "aiConsent.providers"
     }
 
     @Published var targetLanguage: AppLanguage { didSet { defaults.set(targetLanguage.rawValue, forKey: Key.target) } }
@@ -159,12 +162,16 @@ final class AppSettings: ObservableObject {
     @Published var showDockIcon: Bool {
         didSet {
             defaults.set(showDockIcon, forKey: Key.dockIcon)
+            #if os(macOS)
             applyActivationPolicy()
+            #endif
         }
     }
+    #if os(macOS)
     @Published var selectionShortcut: Shortcut { didSet { save(selectionShortcut, Key.selectionShortcut) } }
     @Published var screenshotShortcut: Shortcut { didSet { save(screenshotShortcut, Key.screenshotShortcut) } }
     @Published var inputShortcut: Shortcut { didSet { save(inputShortcut, Key.inputShortcut) } }
+    #endif
     @Published var didOnboard: Bool { didSet { defaults.set(didOnboard, forKey: Key.didOnboard) } }
     /// Chosen speech voice identifier per `AppLanguage.rawValue`; a missing entry means "best available".
     @Published var speechVoices: [String: String] { didSet { defaults.set(speechVoices, forKey: Key.speechVoices) } }
@@ -176,6 +183,15 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(cacheSizeLimit.rawValue, forKey: Key.cacheSizeLimit) }
     }
 
+    #if os(iOS)
+    /// Provider IDs the user agreed to send text to (App Review guideline 5.1.2(i): disclose and ask before
+    /// sharing data with a third-party AI service).
+    @Published var aiConsentProviders: Set<String> {
+        didSet { defaults.set(Array(aiConsentProviders), forKey: Key.aiConsent) }
+    }
+    #endif
+
+    #if os(macOS)
     @Published var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled {
         didSet {
             guard launchAtLogin != (SMAppService.mainApp.status == .enabled) else { return }
@@ -186,6 +202,7 @@ final class AppSettings: ObservableObject {
             }
         }
     }
+    #endif
 
     private init() {
         defaults.register(defaults: [
@@ -210,11 +227,28 @@ final class AppSettings: ObservableObject {
         cacheEnabled = defaults.bool(forKey: Key.cacheEnabled)
         cacheRetention = CacheRetention(rawValue: defaults.string(forKey: Key.cacheRetention) ?? "") ?? .days90
         cacheSizeLimit = CacheSizeLimit(storedMegabytes: defaults.integer(forKey: Key.cacheSizeLimit))
+        #if os(macOS)
         selectionShortcut = Self.load(Key.selectionShortcut) ?? .defaultSelection
         screenshotShortcut = Self.load(Key.screenshotShortcut) ?? .defaultScreenshot
         inputShortcut = Self.load(Key.inputShortcut) ?? .defaultInput
+        #else
+        aiConsentProviders = Set(defaults.stringArray(forKey: Key.aiConsent) ?? [])
+        #endif
     }
 
+    #if os(iOS)
+    /// Consent is tied to the provider and the host it sends to, so pointing a provider at another server asks again.
+    private func consentKey(_ config: ProviderConfig) -> String {
+        "\(config.id.uuidString)|\(config.endpointHost)"
+    }
+    func hasAIConsent(for config: ProviderConfig) -> Bool { aiConsentProviders.contains(consentKey(config)) }
+    func grantAIConsent(for config: ProviderConfig) { aiConsentProviders.insert(consentKey(config)) }
+    func revokeAIConsent(for config: ProviderConfig) {
+        aiConsentProviders = aiConsentProviders.filter { !$0.hasPrefix(config.id.uuidString) }
+    }
+    #endif
+
+    #if os(macOS)
     func applyActivationPolicy() {
         NSApp.setActivationPolicy(showDockIcon ? .regular : .accessory)
     }
@@ -227,4 +261,5 @@ final class AppSettings: ObservableObject {
         guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(Shortcut.self, from: data)
     }
+#endif
 }

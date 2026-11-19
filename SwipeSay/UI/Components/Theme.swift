@@ -1,6 +1,10 @@
 import SwiftUI
-import AppKit
 import AVFoundation
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 enum Theme {
     /// Coral highlighter from the app icon.
@@ -9,8 +13,18 @@ enum Theme {
     static let highlight = Color(red: 1.0, green: 0.78, blue: 0.24)
     static let corner: CGFloat = 16
     static let popupWidth: CGFloat = 420
+
+    /// Font size for the shared result views: the Mac popup is dense, the iOS screens need larger text.
+    static func fs(_ size: CGFloat) -> CGFloat {
+        #if os(iOS)
+        return (size * 1.22).rounded()
+        #else
+        return size
+        #endif
+    }
 }
 
+#if os(macOS)
 /// Native translucent background.
 struct VisualEffectBackground: NSViewRepresentable {
     var material: NSVisualEffectView.Material = .popover
@@ -52,6 +66,7 @@ final class FlatBackgroundView: NSView {
     }
     override func viewDidChangeEffectiveAppearance() { needsDisplay = true }
 }
+#endif
 
 /// Small rounded tag.
 struct TagView: View {
@@ -60,7 +75,7 @@ struct TagView: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 10, weight: .semibold))
+            .font(.system(size: Theme.fs(10), weight: .semibold))
             .foregroundStyle(color)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
@@ -79,7 +94,7 @@ struct IconButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: Theme.fs(12), weight: .medium))
                 .foregroundStyle(active ? Theme.accent : (hover ? .primary : .secondary))
                 .frame(width: 24, height: 24)
                 .background(hover ? Color.primary.opacity(0.07) : .clear, in: RoundedRectangle(cornerRadius: 6))
@@ -272,9 +287,13 @@ extension AppLanguage {
     }
 }
 
-extension NSPasteboard {
+enum Clipboard {
     static func copy(_ text: String) {
-        general.clearContents()
-        general.setString(text, forType: .string)
+        #if os(macOS)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        #else
+        UIPasteboard.general.string = text
+        #endif
     }
 }

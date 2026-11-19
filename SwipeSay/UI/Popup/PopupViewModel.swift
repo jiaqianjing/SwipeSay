@@ -28,6 +28,8 @@ final class PopupViewModel: ObservableObject {
     @Published var translation = ""
     @Published var word: WordResult?
     @Published var notConfigured = false
+    /// iOS: the active provider needs the user's consent before any text is sent to it.
+    @Published var needsConsent = false
 
     @Published var capsuleExpanded = false
     /// Whether the word card's declension / conjugation tables are shown.
@@ -134,6 +136,7 @@ final class PopupViewModel: ObservableObject {
         capsuleExpanded = false
         formsExpanded = false
         notConfigured = false
+        needsConsent = false
         cachedAt = nil
         self.bypassCache = bypassCache
         // The conversation was about the previous result; the draft is kept.
@@ -190,6 +193,7 @@ final class PopupViewModel: ObservableObject {
             } catch is CancellationError {
             } catch {
                 if case LLMError.notConfigured = error { self?.notConfigured = true }
+                if case LLMError.consentRequired = error { self?.needsConsent = true }
                 if (error as? URLError)?.code == .cancelled { return }
                 self?.phase = .failed(error.localizedDescription)
             }

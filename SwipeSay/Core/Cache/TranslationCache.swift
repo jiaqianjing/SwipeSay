@@ -102,7 +102,7 @@ final class TranslationCache: ObservableObject {
         if MockClient.isEnabled { return (memoryContainer(), true) }
         #endif
         // Next to the vocabulary store, in our own folder.
-        let dir = URL.applicationSupportDirectory.appending(path: "SwipeSay", directoryHint: .isDirectory)
+        let dir = SharedStorage.directory
         let url = dir.appending(path: "TranslationCache.store")
         do {
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
