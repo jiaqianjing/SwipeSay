@@ -1,4 +1,5 @@
 import SwiftUI
+import SwipeSayKit
 
 @main
 struct SwipeSayApp: App {

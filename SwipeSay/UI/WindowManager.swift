@@ -1,4 +1,5 @@
 import AppKit
+import SwipeSayKit
 import SwiftUI
 
 enum SettingsTab: String, CaseIterable, Identifiable {

@@ -1,4 +1,5 @@
 import Foundation
+import SwipeSayKit
 
 /// Answers the Safari extension's requests with the same pipeline as the app (`PopupViewModel`: prompts, cache,
 /// usage, auto-adding to the vocabulary). Native messages are request / response, so every request carries what

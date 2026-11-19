@@ -1,4 +1,5 @@
 import AppKit
+import SwipeSayKit
 import Combine
 import Sparkle
 

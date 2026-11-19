@@ -13,6 +13,9 @@ settings:
     SWIPESAY_IOS_VERSION: 1.0.0
     SWIPESAY_IOS_BUILD: 1
 packages:
+  # Shared code (prompts, providers, settings, cache, usage, vocabulary) used by every target below.
+  SwipeSayKit:
+    path: Packages/SwipeSayKit
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     exactVersion: 2.10.1
@@ -25,6 +28,7 @@ targets:
         excludes:
           - Info.plist
     dependencies:
+      - package: SwipeSayKit
       - package: Sparkle
     settings:
       base:
@@ -42,8 +46,8 @@ targets:
         ENABLE_APP_SANDBOX: NO
         ENABLE_HARDENED_RUNTIME: YES
 
-  # iPhone / iPad app for the App Store. Shares Core and the result views with the Mac app; everything that
-  # needs macOS (Accessibility capture, global hotkeys, screen capture, Sparkle, ChatGPT sign-in) is left out.
+  # iPhone / iPad app for the App Store. Shares SwipeSayKit and the result views with the Mac app; everything
+  # that needs macOS (Accessibility capture, global hotkeys, screen capture, Sparkle, ChatGPT sign-in) is left out.
   SwipeSayiOS:
     type: application
     platform: iOS
@@ -52,18 +56,12 @@ targets:
         excludes:
           - Info.plist
           - "*.entitlements"
-      - path: SwipeSay/Core
-        excludes: &iosCoreExcludes
-          - Capture
-          - Hotkey
-          - Update
-          - LLM/ChatGPTAuth.swift
-          - LLM/ChatGPTClient.swift
       - path: SwipeSay/UI/Components/Theme.swift
       - path: SwipeSay/UI/Popup/PopupViewModel.swift
       - path: SwipeSay/UI/Popup/ResultViews.swift
       - path: SwipeSay/UI/Vocabulary/VocabularyView.swift
     dependencies:
+      - package: SwipeSayKit
       - target: SwipeSayAction
       - target: SwipeSaySafari
     settings:
@@ -103,11 +101,11 @@ targets:
           - Info.plist
           - "*.entitlements"
       - path: SwipeSayiOS/Shared
-      - path: SwipeSay/Core
-        excludes: *iosCoreExcludes
       - path: SwipeSay/UI/Components/Theme.swift
       - path: SwipeSay/UI/Popup/PopupViewModel.swift
       - path: SwipeSay/UI/Popup/ResultViews.swift
+    dependencies:
+      - package: SwipeSayKit
     settings:
       base:
         PRODUCT_NAME: SwipeSayAction
@@ -136,10 +134,10 @@ targets:
       # Copied flat into the bundle root, where Safari looks for manifest.json.
       - path: SwipeSaySafari/Resources
         buildPhase: resources
-      - path: SwipeSay/Core
-        excludes: *iosCoreExcludes
       - path: SwipeSay/UI/Components/Theme.swift
       - path: SwipeSay/UI/Popup/PopupViewModel.swift
+    dependencies:
+      - package: SwipeSayKit
     settings:
       base:
         PRODUCT_NAME: SwipeSaySafari

@@ -1,4 +1,5 @@
 import SwiftUI
+import SwipeSayKit
 
 /// Edit one provider: key, base URL, model, and a connection test. Mirrors the Mac `ProviderDetailView`
 /// without the ChatGPT sign-in.

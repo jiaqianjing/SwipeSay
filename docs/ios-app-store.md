@@ -9,7 +9,8 @@
 | `SwipeSayAction` | 分享菜单里的「SwipeSay 翻译」操作扩展 | `com.kenjia.swipesay.ios.action` |
 | `SwipeSaySafari` | Safari 网页扩展「SwipeSay 划词翻译」：在网页上选中文字，翻译直接出现在选区下方 | `com.kenjia.swipesay.ios.safari` |
 
-- 共用代码：`SwipeSay/Core`（不含 `Capture`、`Hotkey`、`Update`、`ChatGPTAuth`、`ChatGPTClient`）、`Theme.swift`、`PopupViewModel.swift`、`ResultViews.swift`、`VocabularyView.swift`。只在单个平台用到的代码用 `#if os(macOS)` / `#if os(iOS)` 隔开。
+- 共用代码在本地 Swift 包 `Packages/SwipeSayKit`（提示词、模型服务、设置、缓存、用量、生词本），所有 target 都依赖它，对外的类型和方法标为 `public`。ChatGPT 订阅登录和快捷键模型在包里用 `#if os(macOS)` 包住，不会编进 iOS。界面层的 `Theme.swift`、`PopupViewModel.swift`、`ResultViews.swift`、`VocabularyView.swift` 仍以源文件形式编进 iOS target。
+- 包有自己的单元测试：在 `Packages/SwipeSayKit` 目录运行 `swift test`。
 - iOS 专用代码在 `SwipeSayiOS/`，App 和扩展共用的视图在 `SwipeSayiOS/Shared/`。
 - Safari 扩展：`SwipeSaySafari/Resources/content.js` 负责监听选区、在页面里画面板（Shadow DOM，不受网页样式影响）；请求经 `background.js` 用 `sendNativeMessage` 发给 `SafariWebExtensionHandler`，由 `WebBridge.swift` 复用 `PopupViewModel` 完成翻译、单词卡、重点表达、追问和收藏（缓存、用量、自动加入生词本与 App 完全一致）。原生消息是一问一答，所以译文不是流式显示，而是一次性出现。
 - Safari 扩展的工具栏弹窗（`popup.html`）可以选择划词后「直接弹出翻译」「先显示『译』按钮」或「暂停」。

@@ -224,31 +224,44 @@ open SwipeSay.xcodeproj
 
 The Xcode project is generated from `project.yml`. Run `xcodegen generate` again after adding files.
 
+The shared code is a local Swift package with its own tests, which run without either app:
+
+```bash
+cd Packages/SwipeSayKit && swift test
+```
+
 <details>
 <summary><b>Project layout</b></summary>
 
 ```
-SwipeSay/
-  App/AppDelegate.swift          hotkeys, actions, launch flow
-  SwipeSayApp.swift              menu bar extra
-  Core/
-    Capture/                     AX selection + context, quick button, screenshot OCR
-    Hotkey/                      Carbon global hotkeys, Shortcut model
+Packages/SwipeSayKit/            shared by every target (local Swift package)
+  Sources/SwipeSayKit/
     LLM/                         provider configs, Keychain, clients (OpenAI-compatible,
-                                 Anthropic, Gemini, ChatGPT/Codex), ChatGPT OAuth,
+                                 Anthropic, Gemini; ChatGPT/Codex and its OAuth on macOS only),
                                  ModelCatalog (model filtering, sorting, reference prices)
     Translation/                 prompts, response models, language/mode planning
     Cache/                       translation cache (separate SwiftData store, LRU eviction)
     Usage/                       usage tracking, daily totals store, cost estimates
-    Vocabulary/                  SwiftData store (~/Library/Application Support/SwipeSay)
-    Settings/                    AppSettings (UserDefaults)
+    Vocabulary/                  SwiftData vocabulary store
+    Settings/                    AppSettings (UserDefaults), shared storage locations
+    Hotkey/Shortcut.swift        shortcut model (macOS only)
+  Tests/SwipeSayKitTests/        unit tests: `swift test` in Packages/SwipeSayKit
+SwipeSay/                        Mac app
+  App/AppDelegate.swift          hotkeys, actions, launch flow
+  SwipeSayApp.swift              menu bar extra
+  Core/
+    Capture/                     AX selection + context, quick button, screenshot OCR
+    Hotkey/                      Carbon global hotkeys
     Update/                      Sparkle updater
   UI/
     Popup/                       floating panel, view model, capsule, analysis, follow-ups
     Settings/  Vocabulary/  Components/
+SwipeSayiOS/                     iPhone / iPad app (see docs/ios-app-store.md)
+SwipeSayAction/                  iOS share-sheet extension
+SwipeSaySafari/                  iOS Safari web extension
 ```
 
-All prompts live in `Core/Translation/Prompts.swift`.
+All prompts live in `Packages/SwipeSayKit/Sources/SwipeSayKit/Translation/Prompts.swift`. Anything the Mac and iOS apps both need goes in SwipeSayKit and is marked `public`; UI and platform-only code stays in the app targets. The popup's view model and result views (`SwipeSay/UI/Popup/PopupViewModel.swift`, `ResultViews.swift`, `UI/Components/Theme.swift`) are compiled into the iOS targets too.
 
 </details>
 

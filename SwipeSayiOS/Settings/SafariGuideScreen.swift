@@ -1,4 +1,5 @@
 import SwiftUI
+import SwipeSayKit
 
 /// How to turn on the Safari extension. Apps can't open Safari's extension settings directly, so this walks the
 /// user through it.

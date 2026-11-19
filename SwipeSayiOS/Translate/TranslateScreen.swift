@@ -1,4 +1,5 @@
 import SwiftUI
+import SwipeSayKit
 
 /// 翻译 tab: type or paste text, get the same result the Mac popup shows, and ask follow-ups.
 struct TranslateScreen: View {

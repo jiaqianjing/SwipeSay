@@ -1,4 +1,5 @@
 import SwiftUI
+import SwipeSayKit
 
 enum AppLinks {
     static let privacyPolicy = URL(string: "https://github.com/jiaqianjing/SwipeSay/blob/main/docs/privacy.md")!

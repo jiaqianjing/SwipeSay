@@ -1,4 +1,5 @@
 import AppKit
+import SwipeSayKit
 import Carbon.HIToolbox
 
 /// Registers system-wide hotkeys through Carbon (works without extra permissions).
