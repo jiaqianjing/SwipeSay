@@ -230,6 +230,8 @@ The shared code is a local Swift package with its own tests, which run without e
 cd Packages/SwipeSayKit && swift test
 ```
 
+CI (`.github/workflows/ci.yml`) runs on every pull request and on `main`. It runs these tests, builds the Mac app and the iOS app (unsigned), and checks that `SwipeSay.xcodeproj` matches `project.yml`.
+
 <details>
 <summary><b>Project layout</b></summary>
 
