@@ -7,9 +7,13 @@
 | `SwipeSay` | Mac 版，不变（Developer ID + Sparkle） | `com.kenjia.swipesay` |
 | `SwipeSayiOS` | iPhone / iPad App | `com.kenjia.swipesay.ios` |
 | `SwipeSayAction` | 分享菜单里的「SwipeSay 翻译」操作扩展 | `com.kenjia.swipesay.ios.action` |
+| `SwipeSaySafari` | Safari 网页扩展「SwipeSay 划词翻译」：在网页上选中文字，翻译直接出现在选区下方 | `com.kenjia.swipesay.ios.safari` |
 
 - 共用代码：`SwipeSay/Core`（不含 `Capture`、`Hotkey`、`Update`、`ChatGPTAuth`、`ChatGPTClient`）、`Theme.swift`、`PopupViewModel.swift`、`ResultViews.swift`、`VocabularyView.swift`。只在单个平台用到的代码用 `#if os(macOS)` / `#if os(iOS)` 隔开。
 - iOS 专用代码在 `SwipeSayiOS/`，App 和扩展共用的视图在 `SwipeSayiOS/Shared/`。
+- Safari 扩展：`SwipeSaySafari/Resources/content.js` 负责监听选区、在页面里画面板（Shadow DOM，不受网页样式影响）；请求经 `background.js` 用 `sendNativeMessage` 发给 `SafariWebExtensionHandler`，由 `WebBridge.swift` 复用 `PopupViewModel` 完成翻译、单词卡、重点表达、追问和收藏（缓存、用量、自动加入生词本与 App 完全一致）。原生消息是一问一答，所以译文不是流式显示，而是一次性出现。
+- Safari 扩展的工具栏弹窗（`popup.html`）可以选择划词后「直接弹出翻译」「先显示『译』按钮」或「暂停」。
+- App 注册了 `swipesay://settings`，扩展在没有配置模型服务时用它跳回 App 的设置页。
 - App 和扩展通过 App Group `group.com.kenjia.swipesay` 共享以下内容：设置（UserDefaults suite）、SwiftData 数据库（生词本、缓存、用量）、钥匙串里的 API Key。
 - iOS 有自己的版本号：`project.yml` 里的 `SWIPESAY_IOS_VERSION` / `SWIPESAY_IOS_BUILD`。`scripts/release.sh` 只改 Mac 的 `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION`，不会碰到 iOS 的版本号。
 - 不允许 iPad 版在 Apple 芯片 Mac 上运行（`SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO`），避免和 Mac 版冲突。
@@ -55,6 +59,8 @@ Debug 启动参数（只在 Debug 构建中生效）：
    >
    > To test: Settings → OpenAI → paste the demo API key below → 设为当前使用. Then go to 翻译, type or paste English text and tap 翻译. A consent sheet names the provider and host before the first request.
    >
+   > Safari extension: Settings → Apps → Safari → Extensions → SwipeSay 划词翻译 → turn on and allow on all websites. Then select text on any web page; the translation appears right below the selection. The first time, the panel asks for consent before sending anything.
+   >
    > Share extension: select text in Safari or Notes → Share… → SwipeSay 翻译.
    >
    > Demo API key (OpenAI, spending-limited, for review only): `<填一个设了额度上限的 Key>`
@@ -70,12 +76,17 @@ Debug 启动参数（只在 Debug 构建中生效）：
 - [x] 粘贴使用 `PasteButton`，不会触发系统的「允许粘贴」弹窗
 - [x] 支持 iPad 多任务（没有设置 `UIRequiresFullScreen`）
 - [x] 局域网模型服务：`NSAllowsLocalNetworking` + `NSLocalNetworkUsageDescription`
+- [x] Safari 扩展只申请 `nativeMessaging` 和 `storage` 权限；只读取选中的文字和所在段落，不记录浏览内容
+- [x] Safari 扩展面板里有自己的同意页（服务名 + 主机），同意前不发送任何文字
 - [ ] 真机测试：分享扩展（Safari 网页选词、备忘录）
+- [ ] 真机测试：Safari 扩展（直接弹出 / 按钮模式、单词卡、重点表达、追问、收藏、同意页、未配置时跳回 App）
 - [ ] 真机测试：首次添加 Key 后，扩展能读到钥匙串里的 Key（App Group 访问组）
 - [ ] 在 App Review 备注里填写演示 Key
 
 ## 已知限制（第一期）
 
 - 扩展写入生词本后，如果 App 一直在后台运行，生词本列表可能要等 App 重启才刷新（两个进程共用同一个 SwiftData 库，主 App 的 `@Query` 不会自动收到另一个进程的写入）。
-- 还没有用量统计页、截图 OCR、Safari 网页扩展、快捷指令或小组件（都在后续计划里）。
+- Safari 扩展的译文一次性出现，不像 App 里那样逐字流式显示。
+- Safari 扩展在网页的输入框和可编辑区域里不触发，避免干扰打字。
+- 还没有用量统计页、截图 OCR、快捷指令或小组件（都在后续计划里）。
 - 生词本暂不和 Mac 同步（计划用 iCloud / CloudKit 实现，见 #22）。

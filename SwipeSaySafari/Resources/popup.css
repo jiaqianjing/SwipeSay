@@ -1,0 +1,12 @@
+:root { color-scheme: light dark; --accent: #f2635c; --muted: #6e6e73; --soft: rgba(118,118,128,0.12); }
+@media (prefers-color-scheme: dark) { :root { --muted: #a1a1a6; --soft: rgba(118,118,128,0.24); } }
+body { font: 15px/1.45 -apple-system, "PingFang SC", sans-serif; margin: 0; padding: 16px; min-width: 280px; }
+h1 { font-size: 17px; margin: 0 0 4px; }
+.hint { color: var(--muted); margin: 0 0 10px; font-size: 13px; }
+.options { display: grid; gap: 8px; }
+label { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; background: var(--soft); border-radius: 12px; }
+input { accent-color: var(--accent); margin-top: 3px; }
+label span { display: grid; }
+small { color: var(--muted); font-size: 12px; }
+.foot { color: var(--muted); font-size: 12px; margin: 14px 0 0; }
+a { color: var(--accent); }

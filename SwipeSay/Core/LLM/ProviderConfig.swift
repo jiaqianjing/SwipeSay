@@ -139,6 +139,7 @@ final class ProviderStore: ObservableObject {
     private let activeKey = "providers.active"
     /// Debug mock mode keeps providers in memory, so trying things out never rewrites the real settings.
     private var inMemory = false
+    private var isReloading = false
 
     private init() {
         #if DEBUG
@@ -157,8 +158,13 @@ final class ProviderStore: ObservableObject {
             return
         }
         #endif
+        providers = Self.loadSaved(from: defaults, key: storageKey)
+        activeID = defaults.string(forKey: activeKey).flatMap(UUID.init(uuidString:))
+    }
+
+    private static func loadSaved(from defaults: UserDefaults, key: String) -> [ProviderConfig] {
         var loaded: [ProviderConfig] = []
-        if let data = defaults.data(forKey: storageKey),
+        if let data = defaults.data(forKey: key),
            let saved = try? JSONDecoder().decode([ProviderConfig].self, from: data), !saved.isEmpty {
             // Move configs still on an old built-in default to the current one; user-picked models stay.
             let legacyDefaults: [ProviderKind: Set<String>] = [
@@ -172,11 +178,22 @@ final class ProviderStore: ObservableObject {
                 return c
             }
         }
-        providers = loaded.isEmpty
+        return loaded.isEmpty
             ? ProviderKind.available.filter { $0 != .openAICompatible }.map { ProviderConfig(kind: $0) }
             : loaded
+    }
+
+    #if os(iOS)
+    /// Re-reads providers the app may have changed since this process started (the Safari extension's process
+    /// can live a long time). Does not write anything back.
+    func reloadFromStorage() {
+        guard !inMemory else { return }
+        isReloading = true
+        defer { isReloading = false }
+        providers = Self.loadSaved(from: defaults, key: storageKey)
         activeID = defaults.string(forKey: activeKey).flatMap(UUID.init(uuidString:))
     }
+    #endif
 
     var active: ProviderConfig? {
         if let id = activeID, let p = providers.first(where: { $0.id == id }) { return p }
@@ -201,7 +218,7 @@ final class ProviderStore: ObservableObject {
     }
 
     private func persist() {
-        guard !inMemory else { return }
+        guard !inMemory, !isReloading else { return }
         if let data = try? JSONEncoder().encode(providers) { defaults.set(data, forKey: storageKey) }
         defaults.set(activeID?.uuidString, forKey: activeKey)
     }

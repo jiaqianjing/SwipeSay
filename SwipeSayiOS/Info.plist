@@ -8,6 +8,17 @@
 	<array>
 		<string>zh-Hans</string>
 	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.kenjia.swipesay.ios</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>swipesay</string>
+			</array>
+		</dict>
+	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSAppTransportSecurity</key>

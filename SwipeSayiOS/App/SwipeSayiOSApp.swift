@@ -54,6 +54,14 @@ struct RootView: View {
             tab = .settings
             settingsPath = NavigationPath()
         }
+        // `swipesay://settings` (from the Safari extension when no provider is set up) opens 设置.
+        .onOpenURL { url in
+            guard url.scheme == "swipesay" else { return }
+            if url.host == "settings" {
+                tab = .settings
+                settingsPath = NavigationPath()
+            }
+        }
         // The action extension writes to the same stores; pick up its additions when coming back.
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { vocab.reloadKeys() }

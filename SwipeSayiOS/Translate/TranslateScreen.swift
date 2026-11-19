@@ -106,8 +106,21 @@ struct TranslateScreen: View {
     private var tips: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("在其他 App 里用").font(.headline)
-            tip("hand.tap", "选中文字，点「分享…」，再点 **SwipeSay 翻译**。")
-            tip("safari", "在 Safari 里还会读取所选文字所在的段落，翻译更贴合上下文。")
+            NavigationLink {
+                SafariGuideScreen()
+            } label: {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    Image(systemName: "safari").foregroundStyle(Theme.accent).frame(width: 22)
+                    Text("打开 **Safari 扩展**后，在网页上选中文字，翻译直接出现在下方。")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
+                }
+            }
+            .buttonStyle(.plain)
+            tip("hand.tap", "在其他 App 里选中文字，点「分享…」，再点 **SwipeSay 翻译**。")
             tip("text.word.spacing", "选中单词或短语会得到单词卡，并自动加入生词本。")
             tip("bubble.left.and.text.bubble.right", "翻译完成后，可以在底部继续追问。")
         }

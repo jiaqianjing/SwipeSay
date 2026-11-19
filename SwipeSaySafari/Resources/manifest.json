@@ -1,0 +1,33 @@
+{
+    "manifest_version": 3,
+    "name": "SwipeSay 划词翻译",
+    "description": "在网页上选中文字，就地弹出翻译、单词卡和重点表达。",
+    "version": "1.0",
+    "icons": {
+        "48": "icon-48.png",
+        "96": "icon-96.png",
+        "128": "icon-128.png",
+        "256": "icon-256.png",
+        "512": "icon-512.png"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "js": ["content.js"],
+            "matches": ["<all_urls>"],
+            "run_at": "document_idle"
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "48": "icon-48.png",
+            "64": "icon-64.png",
+            "96": "icon-96.png",
+            "128": "icon-128.png"
+        }
+    },
+    "permissions": ["nativeMessaging", "storage"]
+}

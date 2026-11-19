@@ -126,6 +126,30 @@ When a provider doesn't report token counts, SwipeSay estimates them from the te
 - **Natural voices**: pronunciation uses the best voice installed on your Mac (Premium, then Enhanced). Pick and preview voices in Settings → 学习 → 朗读声音, and download better ones in System Settings → Accessibility → Spoken Content.
 - **Crisp on every screen**: the quick button snaps to the pixel grid, so it stays sharp on Retina and external displays alike.
 
+## iPhone & iPad: select text in Safari
+
+On iPhone and iPad, SwipeSay comes with a Safari extension, **SwipeSay 划词翻译**. Select text on any web page, pause for a moment, and the translation or word card opens right below the selection. From there you can open 重点表达, ask follow-up questions and star words into your vocabulary book. It uses the provider and API key you set up in the SwipeSay app.
+
+<img src="docs/images/ios-safari-panel.png" alt="SwipeSay in Safari on iPhone: a word card for “ubiquitous”, a sentence translation, and its key expressions" width="900">
+
+#### Turn it on (one time)
+
+<img src="docs/images/ios-safari-setup.png" alt="Settings › Apps › Safari › Extensions › SwipeSay 划词翻译 › 允许扩展, then 所有网站 › 允许" width="900">
+
+1. Open **设置 › App › Safari 浏览器** and tap **扩展**. On iOS 17 it is **设置 › Safari 浏览器 › 扩展**.
+2. Tap **SwipeSay 划词翻译**.
+3. Turn on **允许扩展**, then tap **所有网站**.
+4. Choose **允许**. With 询问, Safari asks again on every site.
+
+You can also turn it on from inside Safari: tap the page menu on the left of the address bar, then **管理扩展**, and switch on SwipeSay 划词翻译.
+
+- **The first time** you translate, the panel asks you to confirm which service and host your text is sent to. Nothing is sent before you agree.
+- **Prefer a button?** Tap the SwipeSay icon in Safari's page menu and choose 先显示「译」按钮. You can also pause the extension there.
+- **Other apps**: select text, tap 分享…, then **SwipeSay 翻译**.
+- The extension reads only the text you select and the paragraph around it. It doesn't run inside text fields, and it doesn't record the pages you visit.
+
+The same guide, with buttons, is in the app under 设置 › Safari 划词翻译. The iOS app isn't on the App Store yet. To build it yourself, see [docs/ios-app-store.md](docs/ios-app-store.md).
+
 ## Bring your own model
 
 | Provider | Sign-in | Default model |

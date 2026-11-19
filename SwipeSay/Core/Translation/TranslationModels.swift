@@ -22,21 +22,21 @@ struct CapturedText {
 }
 
 /// Dictionary-style result for a single word / short phrase.
-struct WordResult: Decodable, Equatable {
-    struct Sense: Decodable, Equatable, Hashable {
+struct WordResult: Codable, Equatable {
+    struct Sense: Codable, Equatable, Hashable {
         var pos: String?
         var meaning: String?
     }
-    struct Example: Decodable, Equatable {
+    struct Example: Codable, Equatable {
         var source: String?
         var target: String?
     }
 
     /// How the word inflects (declension, conjugation, gender…), for languages where that matters more than
     /// an English-style part of speech.
-    struct Forms: Decodable, Equatable {
-        struct Table: Decodable, Equatable, Hashable {
-            struct Row: Decodable, Equatable, Hashable {
+    struct Forms: Codable, Equatable {
+        struct Table: Codable, Equatable, Hashable {
+            struct Row: Codable, Equatable, Hashable {
                 var label: String?
                 var cells: [String]?
             }
@@ -90,7 +90,7 @@ enum Phonetic {
 }
 
 /// A learnable expression pulled out of a sentence.
-struct KeyItem: Decodable, Equatable, Hashable, Identifiable {
+struct KeyItem: Codable, Equatable, Hashable, Identifiable {
     var text: String
     var kind: String?
     var phonetic: String?

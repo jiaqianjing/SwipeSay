@@ -246,6 +246,22 @@ final class AppSettings: ObservableObject {
     func revokeAIConsent(for config: ProviderConfig) {
         aiConsentProviders = aiConsentProviders.filter { !$0.hasPrefix(config.id.uuidString) }
     }
+
+    /// Re-reads what the app may have changed since this process started. The Safari extension's process can
+    /// outlive many visits to the app's settings.
+    func reloadFromStorage() {
+        func update<T: Equatable>(_ path: ReferenceWritableKeyPath<AppSettings, T>, _ value: T) {
+            if self[keyPath: path] != value { self[keyPath: path] = value }
+        }
+        update(\.targetLanguage, AppLanguage(rawValue: defaults.string(forKey: Key.target) ?? "") ?? .simplifiedChinese)
+        update(\.secondaryLanguage, AppLanguage(rawValue: defaults.string(forKey: Key.secondary) ?? "") ?? .english)
+        update(\.autoAddWords, defaults.bool(forKey: Key.autoAddWords))
+        update(\.autoAddKeyItems, defaults.bool(forKey: Key.autoAddKeyItems))
+        update(\.useContext, defaults.bool(forKey: Key.useContext))
+        update(\.learnerLevel, LearnerLevel(rawValue: defaults.string(forKey: Key.level) ?? "") ?? .upperIntermediate)
+        update(\.cacheEnabled, defaults.bool(forKey: Key.cacheEnabled))
+        update(\.aiConsentProviders, Set(defaults.stringArray(forKey: Key.aiConsent) ?? []))
+    }
     #endif
 
     #if os(macOS)
