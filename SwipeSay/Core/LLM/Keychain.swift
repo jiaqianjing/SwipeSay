@@ -18,17 +18,24 @@ enum Keychain {
         #endif
     }
 
+    /// The item's identity. On iOS it lives in the App Group's access group so the action extension can read it.
+    private static func base(_ account: String) -> [String: Any] {
+        var query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+        ]
+        if let group = SharedStorage.keychainAccessGroup { query[kSecAttrAccessGroup as String] = group }
+        return query
+    }
+
     static func get(_ account: String) -> String? {
         if disabled { return nil }
         lock.lock(); defer { lock.unlock() }
         if let cached = cache[account] { return cached.isEmpty ? nil : cached }
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
+        var query = base(account)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
         guard status == errSecSuccess, let data = item as? Data, let value = String(data: data, encoding: .utf8) else {
@@ -42,11 +49,7 @@ enum Keychain {
     static func set(_ value: String?, for account: String) {
         if disabled { return }
         lock.lock(); defer { lock.unlock() }
-        let base: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-        ]
+        let base = base(account)
         guard let value, !value.isEmpty else {
             SecItemDelete(base as CFDictionary)
             cache[account] = ""

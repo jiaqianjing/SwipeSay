@@ -1,11 +1,18 @@
 #if DEBUG
 import Foundation
-import AppKit
 
 /// Debug-only canned responses for UI work without a real provider.
 /// Launch with `-SwipeSayMock YES`; add `-SwipeSayDemo "some text"` to open a popup on launch.
 struct MockClient: LLMClient {
-    static var isEnabled: Bool { UserDefaults.standard.bool(forKey: "SwipeSayMock") }
+    static var isEnabled: Bool {
+        if UserDefaults.standard.bool(forKey: "SwipeSayMock") { return true }
+        #if os(iOS)
+        // The iOS app copies its launch flag here so the action extension (which gets no launch arguments) follows it.
+        return SharedStorage.defaults.bool(forKey: "SwipeSayMock")
+        #else
+        return false
+        #endif
+    }
 
     static let config: ProviderConfig = {
         var c = ProviderConfig(kind: .openAICompatible, name: "Mock")

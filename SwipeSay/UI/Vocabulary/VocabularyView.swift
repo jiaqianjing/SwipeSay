@@ -52,6 +52,11 @@ struct VocabularyView: View {
                 .searchable(text: $search, placement: .sidebar, prompt: "搜索单词或释义")
             }
             .navigationSplitViewColumnWidth(min: 240, ideal: 280)
+            #if os(iOS)
+            // On iPhone only the sidebar column is visible, so the title and review button live on it.
+            .navigationTitle("生词本")
+            .toolbar { reviewToolbarItem }
+            #endif
             #if DEBUG
             // `-SwipeSayDemoSelect <term>` opens that entry, for screenshots.
             .onAppear {
@@ -81,19 +86,26 @@ struct VocabularyView: View {
                 }
             }
         }
-        .toolbar {
-            ToolbarItem {
-                Button {
-                    reviewing = true
-                } label: {
-                    Label("复习 \(dueItems.count)", systemImage: "rectangle.stack")
-                }
-                .disabled(dueItems.isEmpty)
-                .help("闪卡复习到期词条")
-            }
-        }
+        #if os(macOS)
+        .toolbar { reviewToolbarItem }
+        #endif
         .sheet(isPresented: $reviewing) {
             ReviewView(queue: dueItems.shuffled()) { reviewing = false }
+        }
+    }
+
+    private var reviewToolbarItem: some ToolbarContent {
+        ToolbarItem {
+            Button {
+                reviewing = true
+            } label: {
+                Label("复习 \(dueItems.count)", systemImage: "rectangle.stack")
+                    #if os(iOS)
+                    .labelStyle(.titleAndIcon)
+                    #endif
+            }
+            .disabled(dueItems.isEmpty)
+            .help("闪卡复习到期词条")
         }
     }
 
@@ -109,11 +121,11 @@ private struct VocabRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 6) {
-                Text(item.term).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                Text(item.term).font(.system(size: Theme.fs(13), weight: .semibold)).lineLimit(1)
                 if item.isDue { Circle().fill(Theme.accent).frame(width: 5, height: 5) }
                 if item.isMastered { Image(systemName: "checkmark.seal.fill").font(.system(size: 9)).foregroundStyle(.green) }
             }
-            Text(item.meaning).font(.system(size: 11.5)).foregroundStyle(.secondary).lineLimit(1)
+            Text(item.meaning).font(.system(size: Theme.fs(11.5))).foregroundStyle(.secondary).lineLimit(1)
         }
         .padding(.vertical, 2)
     }

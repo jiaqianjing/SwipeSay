@@ -1,5 +1,5 @@
 import Foundation
-import AppKit
+import CoreGraphics
 
 /// Text captured from the screen plus whatever context could be gathered around it.
 struct CapturedText {
@@ -12,7 +12,7 @@ struct CapturedText {
     var windowTitle: String?
     var origin: Origin
     /// Screen point (AppKit coordinates) near which to show the popup.
-    var anchor: NSPoint?
+    var anchor: CGPoint?
 
     var hasUsefulContext: Bool {
         guard let context else { return false }
