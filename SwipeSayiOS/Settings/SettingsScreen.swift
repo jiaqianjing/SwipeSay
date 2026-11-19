@@ -11,6 +11,13 @@ struct SettingsScreen: View {
     var body: some View {
         Form {
             providersSection
+            Section("在其他 App 里用") {
+                NavigationLink {
+                    SafariGuideScreen()
+                } label: {
+                    Label("Safari 划词翻译", systemImage: "safari")
+                }
+            }
             Section("翻译") {
                 Picker("我的母语", selection: $settings.targetLanguage) {
                     ForEach(AppLanguage.allCases) { Text($0.displayName).tag($0) }

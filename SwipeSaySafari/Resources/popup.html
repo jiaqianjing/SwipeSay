@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SwipeSay</title>
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <h1>SwipeSay 划词翻译</h1>
+    <p class="hint">在网页上选中文字后：</p>
+    <div class="options" role="radiogroup" aria-label="划词后">
+        <label><input type="radio" name="trigger" value="auto"><span><b>直接弹出翻译</b><small>选中后稍停片刻，就在下方显示结果</small></span></label>
+        <label><input type="radio" name="trigger" value="button"><span><b>先显示「译」按钮</b><small>点一下按钮才翻译，适合经常选中文字复制的时候</small></span></label>
+        <label><input type="radio" name="trigger" value="off"><span><b>暂停</b><small>不响应划词</small></span></label>
+    </div>
+    <p class="foot">模型服务、语言和生词本在 <a href="swipesay://settings" id="open-app">SwipeSay App</a> 里设置。</p>
+    <script src="popup.js"></script>
+</body>
+</html>

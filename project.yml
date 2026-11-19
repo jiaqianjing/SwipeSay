@@ -65,6 +65,7 @@ targets:
       - path: SwipeSay/UI/Vocabulary/VocabularyView.swift
     dependencies:
       - target: SwipeSayAction
+      - target: SwipeSaySafari
     settings:
       base:
         PRODUCT_NAME: SwipeSay
@@ -121,6 +122,38 @@ targets:
         INFOPLIST_FILE: SwipeSayAction/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: SwipeSay 翻译
         APPLICATION_EXTENSION_API_ONLY: YES
+  # Safari web extension: select text on a web page and the translation opens right below it. content.js
+  # draws the panel; SafariWebExtensionHandler / WebBridge do the work with the same pipeline as the app.
+  SwipeSaySafari:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: SwipeSaySafari
+        excludes:
+          - Info.plist
+          - "*.entitlements"
+          - Resources
+      # Copied flat into the bundle root, where Safari looks for manifest.json.
+      - path: SwipeSaySafari/Resources
+        buildPhase: resources
+      - path: SwipeSay/Core
+        excludes: *iosCoreExcludes
+      - path: SwipeSay/UI/Components/Theme.swift
+      - path: SwipeSay/UI/Popup/PopupViewModel.swift
+    settings:
+      base:
+        PRODUCT_NAME: SwipeSaySafari
+        PRODUCT_BUNDLE_IDENTIFIER: com.kenjia.swipesay.ios.safari
+        MARKETING_VERSION: $(SWIPESAY_IOS_VERSION)
+        CURRENT_PROJECT_VERSION: $(SWIPESAY_IOS_BUILD)
+        DEVELOPMENT_TEAM: UBS9FUBNFR
+        CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: SwipeSaySafari/SwipeSaySafari.entitlements
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: SwipeSaySafari/Info.plist
+        INFOPLIST_KEY_CFBundleDisplayName: SwipeSay 划词翻译
+        APPLICATION_EXTENSION_API_ONLY: YES
 schemes:
   SwipeSay:
     build:
@@ -131,6 +164,7 @@ schemes:
       targets:
         SwipeSayiOS: all
         SwipeSayAction: all
+        SwipeSaySafari: all
     run:
       config: Debug
     archive:

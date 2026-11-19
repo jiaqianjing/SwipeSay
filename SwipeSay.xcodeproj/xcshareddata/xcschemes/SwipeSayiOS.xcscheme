@@ -30,6 +30,20 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "A12B0AFD2C81F5863F138B13"
+               BuildableName = "SwipeSaySafari.appex"
+               BlueprintName = "SwipeSaySafari"
+               ReferencedContainer = "container:SwipeSay.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "7078A748CC866C154B7ED3CB"
                BuildableName = "SwipeSayiOS.app"
                BlueprintName = "SwipeSayiOS"
