@@ -65,6 +65,7 @@
 		DA0D12C4BE61B99BCC500159 /* PopupViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9E6E65CEE7E2D2A425E46E5 /* PopupViewModel.swift */; };
 		E52B548BF0CF88C939EB179E /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F645E31BBE6A9ED5662E9BD5 /* AppDelegate.swift */; };
 		E9A37D255BAC0F77095E4861 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = AF870B704D8E54377C2A4469 /* PrivacyInfo.xcprivacy */; };
+		EFDF4F225DAD68FB618345D8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4C70FCB7AF2F7196E50CD59D /* Assets.xcassets */; };
 		F18895137E2E338DBA1D6B6A /* SettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CF29BE67F0DA45DE0485325 /* SettingsScreen.swift */; };
 		F1DA0E2555F7DEB818DB6032 /* VocabularyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 949269E8525735EAB419F55B /* VocabularyView.swift */; };
 		FB64B731C0A5F4C0BE98C375 /* icon-256.png in Resources */ = {isa = PBXBuildFile; fileRef = 1BA005F3086E4522AF5F95C3 /* icon-256.png */; };
@@ -123,6 +124,7 @@
 		47EC1938C4156EE17BCD1E15 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		492B86E2154B282CD817162A /* WebBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebBridge.swift; sourceTree = "<group>"; };
 		4BA2064022BC7554C8C56636 /* UsagePane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsagePane.swift; sourceTree = "<group>"; };
+		4C70FCB7AF2F7196E50CD59D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5A38F562DA6573DA31E21595 /* SelectionCapture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionCapture.swift; sourceTree = "<group>"; };
 		5BA67C37609857B2FBB952D1 /* TranslationResultPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationResultPanel.swift; sourceTree = "<group>"; };
 		5BD78F73F7F0E625072299DA /* popup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = popup.js; sourceTree = "<group>"; };
@@ -220,6 +222,7 @@
 			isa = PBXGroup;
 			children = (
 				34A613C04E1417B451CA88F7 /* ActionViewController.swift */,
+				4C70FCB7AF2F7196E50CD59D /* Assets.xcassets */,
 				745BAE2FCDEC6BC15BB38672 /* GetSelection.js */,
 				B0052DF9BDE5BBEBDEDBEA71 /* PrivacyInfo.xcprivacy */,
 			);
@@ -572,6 +575,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EFDF4F225DAD68FB618345D8 /* Assets.xcassets in Resources */,
 				03A5653768609C5C36C30CC5 /* GetSelection.js in Resources */,
 				C8456CDAD84AFAB3A2254A33 /* PrivacyInfo.xcprivacy in Resources */,
 			);
@@ -729,6 +733,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = SwipeSayAction/SwipeSayAction.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(SWIPESAY_IOS_BUILD)";
@@ -753,6 +758,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = SwipeSayAction/SwipeSayAction.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = "$(SWIPESAY_IOS_BUILD)";

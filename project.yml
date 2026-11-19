@@ -119,6 +119,9 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_FILE: SwipeSayAction/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: SwipeSay 翻译
+        # The share sheet draws action-extension icons from the alpha channel only, so this is a
+        # black-on-transparent glyph. Without it the opaque app icon shows up as a solid black square.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         APPLICATION_EXTENSION_API_ONLY: YES
   # Safari web extension: select text on a web page and the translation opens right below it. content.js
   # draws the panel; SafariWebExtensionHandler / WebBridge do the work with the same pipeline as the app.
