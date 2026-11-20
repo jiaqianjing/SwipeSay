@@ -1,0 +1,87 @@
+name: CI
+
+# Builds the Mac app and the iOS app (with both extensions) and runs the SwipeSayKit tests, so a change to the
+# shared code can't quietly break one platform. Nothing is signed here; releases still go through
+# scripts/release.sh on a Mac with the signing identity.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  package-tests:
+    name: SwipeSayKit tests
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show toolchain
+        run: xcodebuild -version && swift --version
+      - name: swift test
+        working-directory: Packages/SwipeSayKit
+        run: swift test
+
+  project-in-sync:
+    name: Xcode project matches project.yml
+    runs-on: macos-15
+    env:
+      XCODEGEN_VERSION: 2.46.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen ${{ env.XCODEGEN_VERSION }}
+        run: |
+          curl -fsSL -o xcodegen.zip "https://github.com/yonaskolb/XcodeGen/releases/download/${XCODEGEN_VERSION}/xcodegen.zip"
+          unzip -q xcodegen.zip -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/xcodegen/bin" >> "$GITHUB_PATH"
+      - name: Regenerate and compare
+        run: |
+          xcodegen generate
+          if ! git diff --quiet -- SwipeSay.xcodeproj; then
+            git diff --stat -- SwipeSay.xcodeproj
+            echo "::error::SwipeSay.xcodeproj is out of date. Run 'xcodegen generate' and commit the result."
+            exit 1
+          fi
+
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: macOS
+            scheme: SwipeSay
+            destination: generic/platform=macOS
+          - name: iOS
+            scheme: SwipeSayiOS
+            destination: generic/platform=iOS Simulator
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: .spm
+          key: spm-${{ hashFiles('SwipeSay.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+      - name: xcodebuild
+        run: |
+          if ! xcodebuild build \
+              -project SwipeSay.xcodeproj \
+              -scheme "${{ matrix.scheme }}" \
+              -configuration Debug \
+              -destination "${{ matrix.destination }}" \
+              -clonedSourcePackagesDirPath .spm \
+              -derivedDataPath build \
+              CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+              > build.log 2>&1; then
+            grep -E "error:" build.log | sort -u | head -50 || true
+            tail -40 build.log
+            exit 1
+          fi
+          grep -E "BUILD SUCCEEDED" build.log
