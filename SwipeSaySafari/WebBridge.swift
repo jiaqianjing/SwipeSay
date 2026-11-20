@@ -27,7 +27,7 @@ enum WebBridge {
         case "keyItems": return await keyItems(request)
         case "followUp": return await followUp(request)
         case "toggleSave": return toggleSave(request)
-        case "grantConsent": return grantConsent()
+        case "grantConsent": return grantConsent(request)
         default: return ["ok": false, "error": "未知请求：\(request.action)"]
         }
     }
@@ -90,7 +90,7 @@ enum WebBridge {
         model.sendFollowUp()
         await waitUntil { !model.isFollowUpBusy }
         guard let turn = model.followUps.last else { return ["ok": false, "error": "追问失败。"] }
-        if case .failed(let message) = turn.phase { return ["ok": false, "error": message] }
+        guard turn.phase == .done else { return failure(model, turn.phase) }
         return ["ok": true, "answer": turn.answer]
     }
 
@@ -107,10 +107,19 @@ enum WebBridge {
     }
 
     /// The panel's own consent screen (guideline 5.1.2(i)) names the provider and host; agreeing lands here.
-    private static func grantConsent() -> [String: Any] {
-        guard let config = ProviderStore.shared.active else { return ["ok": false, "error": "还没有配置模型服务。"] }
+    private static func grantConsent(_ request: Request) -> [String: Any] {
+        guard let config = ProviderStore.shared.active, config.isReady else {
+            return ["ok": false, "notConfigured": true, "error": "还没有配置模型服务。"]
+        }
+        guard request.string("providerID") == config.id.uuidString, request.string("host") == config.endpointHost else {
+            return ["ok": false, "consent": consentDetails(for: config)]
+        }
         AppSettings.shared.grantAIConsent(for: config)
         return ["ok": true]
+    }
+
+    private static func consentDetails(for config: ProviderConfig) -> [String: String] {
+        ["providerID": config.id.uuidString, "provider": config.name, "host": config.endpointHost]
     }
 
     // MARK: Helpers
@@ -135,7 +144,7 @@ enum WebBridge {
         if case .failed(let message) = phase { reply["error"] = message }
         if model.notConfigured { reply["notConfigured"] = true }
         if model.needsConsent, let config = ProviderStore.shared.active {
-            reply["consent"] = ["provider": config.name, "host": config.endpointHost]
+            reply["consent"] = consentDetails(for: config)
         }
         return reply
     }
@@ -146,10 +155,14 @@ enum WebBridge {
         return model.plan.direction.source ?? TranslationService.detectLanguage(model.sourceText) ?? .english
     }
 
-    private static func waitUntil(timeout: TimeInterval = 120, _ isDone: () -> Bool) async {
-        let deadline = Date().addingTimeInterval(timeout)
-        while !isDone(), Date() < deadline {
-            try? await Task.sleep(for: .milliseconds(40))
+    private static func waitUntil(timeout: Duration = .seconds(120), _ isDone: () -> Bool) async {
+        let deadline = ContinuousClock.now + timeout
+        while !isDone(), ContinuousClock.now < deadline {
+            do {
+                try await Task.sleep(for: .milliseconds(40))
+            } catch {
+                return
+            }
         }
     }
 
