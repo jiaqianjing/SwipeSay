@@ -245,25 +245,38 @@
             if (reply.ok) {
                 state.result = reply;
                 state.phase = "done";
-            } else if (reply.consent) {
-                state.consent = reply.consent;
-                state.phase = "consent";
             } else {
-                state.error = reply.error || "翻译失败。";
-                state.notConfigured = !!reply.notConfigured;
-                state.phase = "error";
+                setRequestFailure(reply, "翻译失败。");
             }
             render();
         });
     }
 
     function grantConsent() {
+        const consent = state.consent;
         const mine = generation;
-        send({ action: "grantConsent" }).then((reply) => {
+        state.phase = "loading";
+        render();
+        send({ action: "grantConsent", providerID: consent.providerID, host: consent.host }).then((reply) => {
             if (mine !== generation || !state) return;
-            if (reply.ok) translate();
-            else { state.error = reply.error || "操作失败。"; state.phase = "error"; render(); }
+            if (reply.ok) {
+                translate();
+            } else {
+                setRequestFailure(reply, "操作失败。");
+                render();
+            }
         });
+    }
+
+    function setRequestFailure(reply, fallback) {
+        if (reply.consent) {
+            state.consent = reply.consent;
+            state.phase = "consent";
+        } else {
+            state.error = reply.error || fallback;
+            state.notConfigured = !!reply.notConfigured;
+            state.phase = "error";
+        }
     }
 
     function loadKeyItems() {
@@ -299,14 +312,16 @@
     }
 
     function toggleSave(item, button) {
+        const mine = generation;
+        const result = state.result;
         const payload = basePayload("toggleSave");
         if (item) payload.item = stripLocal(item);
         button.disabled = true;
         send(payload).then((reply) => {
             button.disabled = false;
-            if (!reply.ok || !state) return;
+            if (!reply.ok || mine !== generation || state?.result !== result) return;
             if (item) item.saved = reply.saved;
-            else state.result.saved = reply.saved;
+            else result.saved = reply.saved;
             render();
         });
     }
